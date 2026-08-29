@@ -3,6 +3,7 @@
 # scripts) no debe acabar nunca en un repositorio publico.
 *
 !.gitignore
+!.gitattributes
 !README.md
 !index.html
 !sw.js
