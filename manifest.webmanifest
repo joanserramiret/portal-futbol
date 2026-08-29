@@ -1,0 +1,30 @@
+{
+ "name": "En qué canal juega mi equipo",
+ "short_name": "Qué canal",
+ "description": "Los próximos partidos de tu equipo y el canal que los da.",
+ "lang": "es",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#EDEFEA",
+ "theme_color": "#0F1614",
+ "icons": [
+  {
+   "src": "icono/icono-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icono/icono-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "icono/icono-512-maskable.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

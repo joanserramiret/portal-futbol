@@ -1,0 +1,15 @@
+# Lista blanca: aqui solo entra lo que se publica.
+# El resto de la carpeta del portal (claves, registros, copias de seguridad,
+# scripts) no debe acabar nunca en un repositorio publico.
+*
+!.gitignore
+!README.md
+!index.html
+!sw.js
+!manifest.webmanifest
+!escudos/
+!escudos/**
+!icono/
+!icono/**
+!datos/
+!datos/resultados.json

@@ -1,0 +1,1363 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Los próximos partidos de tu equipo y el canal que los da. LaLiga y competiciones europeas.">
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icono/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="icono/icono-192.png">
+<link rel="apple-touch-icon" href="icono/icono-180.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Qué canal">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="theme-color" content="#EDEFEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1311" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<title>En qué canal juega mi equipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+
+<style>
+:root{
+  --bg:#EDEFEA; --surface:#FFFFFF; --surface2:#F5F7F2; --sunk:#E4E8DF;
+  --ink:#131A17; --ink2:#5A675F; --ink3:#8A968E;
+  --line:#DBE0D6; --line2:#C7CFC2;
+  --accent:#C97B22; --accent-soft:#FBEBD6; --accent-line:#E8B173;
+  --live:#C0342A; --free:#1C7A4E; --free-soft:#DCF0E5;
+  --shadow:0 1px 2px rgba(19,26,23,.05), 0 8px 24px -12px rgba(19,26,23,.18);
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1311; --surface:#151D1A; --surface2:#1B2522; --sunk:#101816;
+    --ink:#E9EEE9; --ink2:#95A39B; --ink3:#6E7C75;
+    --line:#26312D; --line2:#33403B;
+    --accent:#EFAE62; --accent-soft:#2A2015; --accent-line:#6B4E28;
+    --live:#FF7264; --free:#59CE95; --free-soft:#12281E;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1311; --surface:#151D1A; --surface2:#1B2522; --sunk:#101816;
+  --ink:#E9EEE9; --ink2:#95A39B; --ink3:#6E7C75;
+  --line:#26312D; --line2:#33403B;
+  --accent:#EFAE62; --accent-soft:#2A2015; --accent-line:#6B4E28;
+  --live:#FF7264; --free:#59CE95; --free-soft:#12281E;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink); overflow-x:hidden;
+  font-family:"Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  font-size:16px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:780px; margin:0 auto;
+  /* env() deja sitio a la muesca y a la barra inferior cuando va como app */
+  padding:calc(22px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+          calc(72px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+/* ---------- masthead ---------- */
+.mast{display:flex; flex-direction:column; gap:6px; padding-bottom:18px; border-bottom:2px solid var(--ink); margin-bottom:20px}
+.mast h1{
+  font-family:Archivo, ui-sans-serif, sans-serif; font-weight:800;
+  font-size:clamp(30px,7.5vw,46px); line-height:.98; letter-spacing:-.025em;
+  margin:0; text-wrap:balance;
+}
+.mast h1 em{font-style:normal; color:var(--accent)}
+.mast p{margin:0; color:var(--ink2); font-size:15px; max-width:46ch}
+.stamp{
+  font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:11px; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink3);
+}
+
+/* ---------- team picker ---------- */
+.pickhead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 12px}
+h2.sec{
+  font-family:Archivo, sans-serif; font-weight:700; font-size:13px;
+  letter-spacing:.13em; text-transform:uppercase; margin:0; color:var(--ink2);
+}
+.grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(78px,1fr)); gap:6px;
+}
+.tbtn{
+  appearance:none; border:1px solid transparent; background:transparent; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:10px 4px 8px; border-radius:12px; color:var(--ink);
+  font-family:inherit; font-size:11.5px; font-weight:600; line-height:1.15; text-align:center;
+  transition:background .14s ease, border-color .14s ease, transform .14s ease;
+}
+.tbtn:hover{background:var(--surface2)}
+.tbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.tbtn[aria-pressed="true"]{background:var(--surface); border-color:var(--line2); box-shadow:var(--shadow)}
+.tbtn svg{display:block}
+.crest{display:block; object-fit:contain; flex:none}
+
+/* ---------- chosen bar ---------- */
+.chosen{
+  display:none; align-items:center; gap:12px; background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px;
+  box-shadow:var(--shadow); margin-bottom:18px;
+}
+.chosen.on{display:flex}
+.chosen .who{flex:1; min-width:0}
+.chosen .who b{display:block; font-family:Archivo,sans-serif; font-weight:700; font-size:17px; letter-spacing:-.01em}
+.chosen .who span{display:block; font-size:12.5px; color:var(--ink2)}
+.linkbtn{
+  appearance:none; background:none; border:1px solid var(--line2); color:var(--ink2);
+  font-family:inherit; font-size:12.5px; font-weight:600; padding:6px 11px;
+  border-radius:99px; cursor:pointer; white-space:nowrap;
+}
+.linkbtn:hover{color:var(--ink); border-color:var(--ink2)}
+.linkbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* ---------- next match hero ---------- */
+.hero{
+  position:relative; overflow:hidden;
+  background:var(--surface); border:1px solid var(--line); border-radius:18px;
+  box-shadow:var(--shadow); margin-bottom:22px;
+}
+.hero::before{
+  content:""; position:absolute; inset:auto 0 -140px 0; height:280px;
+  background:radial-gradient(60% 100% at 50% 100%, var(--accent-soft), transparent 70%);
+  pointer-events:none;
+}
+.hero .pitch{position:absolute; inset:0; pointer-events:none; opacity:.5}
+.hero .pitch i{position:absolute; top:0; bottom:0; width:1px; background:var(--line)}
+.hero-in{position:relative; padding:18px 18px 20px}
+.eyebrow{
+  display:flex; align-items:center; gap:8px; margin-bottom:16px;
+  font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--accent);
+}
+.eyebrow .dot{width:6px; height:6px; border-radius:99px; background:var(--accent)}
+.matchup{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; max-width:440px; margin:0 auto}
+.side{display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center}
+.side b{font-family:Archivo,sans-serif; font-weight:700; font-size:15px; letter-spacing:-.01em; line-height:1.1}
+.side em{font-style:normal; font-size:11px; color:var(--ink3); font-family:"IBM Plex Mono",monospace; letter-spacing:.08em; text-transform:uppercase}
+.vs{
+  font-family:Archivo,sans-serif; font-weight:800; font-size:13px; color:var(--ink3);
+  letter-spacing:.1em;
+}
+.when{
+  margin-top:18px; padding-top:16px; border-top:1px solid var(--line);
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px;
+}
+.when .day{
+  font-family:Archivo,sans-serif; font-weight:700; font-size:19px; letter-spacing:-.01em;
+}
+.when .hh{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:19px;
+  font-variant-numeric:tabular-nums; color:var(--ink);
+}
+.count{
+  margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600;
+  color:var(--ink2); font-variant-numeric:tabular-nums; letter-spacing:.02em;
+}
+.count.live{color:var(--live)}
+.chrow{display:flex; flex-wrap:wrap; gap:7px; margin-top:14px; align-items:center}
+.hero .chrow{margin-top:16px}
+
+/* ---------- channel chips ---------- */
+.ch{
+  display:inline-flex; align-items:center; gap:7px; border-radius:8px;
+  padding:5px 10px 5px 6px; font-size:12.5px; font-weight:600; line-height:1.2;
+  border:1px solid var(--line); background:var(--surface2); color:var(--ink);
+}
+.ch .logo{
+  display:inline-flex; align-items:center; justify-content:center;
+  height:20px; min-width:20px; padding:0 6px; border-radius:5px;
+  font-family:Archivo,sans-serif; font-weight:800; font-size:10px; letter-spacing:.02em;
+}
+.lg-m{background:#0B7FD4; color:#fff}
+.lg-mc{background:#0B3F8F; color:#fff}
+.lg-dz{background:#111; color:#fff}
+.lg-or{background:#FF7900; color:#000}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .lg-dz{background:#F1F3F0; color:#111}
+}
+:root[data-theme="dark"] .lg-dz{background:#F1F3F0; color:#111}
+.ch .dial{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:10.5px; color:var(--ink3)}
+.ch.tbd{border-style:dashed; color:var(--ink3); background:transparent}
+.freetag{
+  display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:8px;
+  background:var(--free-soft); color:var(--free); border:1px solid transparent;
+  font-family:Archivo,sans-serif; font-weight:700; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex; gap:4px; background:var(--sunk); padding:4px; border-radius:11px; margin-bottom:16px}
+.tab{
+  flex:1; appearance:none; border:0; background:transparent; cursor:pointer; color:var(--ink2);
+  font-family:Archivo,sans-serif; font-weight:700; font-size:12.5px; letter-spacing:.02em;
+  padding:8px 6px; border-radius:8px;
+}
+.tab[aria-selected="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
+.tab:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* ---------- fixture list ---------- */
+.month{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink3); margin:22px 0 8px; padding-bottom:6px;
+  border-bottom:1px solid var(--line);
+}
+.month:first-child{margin-top:0}
+.fx{
+  display:grid; grid-template-columns:52px 1fr; gap:12px; align-items:start;
+  padding:13px 12px; background:var(--surface); border:1px solid var(--line);
+  border-radius:12px; margin-bottom:7px;
+}
+.fx.hi{border-color:var(--accent-line); background:linear-gradient(var(--surface),var(--surface)) padding-box}
+.fx .dt{text-align:center; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.fx .dt .d{display:block; font-size:20px; font-weight:600; line-height:1.05}
+.fx .dt .mo{display:block; font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink3)}
+.fx .dt .wd{display:block; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink3); margin-top:3px}
+.fx .body{min-width:0}
+.fx .top{display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+.fx .opp{font-family:Archivo,sans-serif; font-weight:700; font-size:15.5px; letter-spacing:-.01em}
+.fx .meta{display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap}
+.pill{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.08em;
+  text-transform:uppercase; padding:2px 7px; border-radius:5px; background:var(--sunk); color:var(--ink2);
+}
+.pill.away{background:transparent; border:1px solid var(--line2)}
+.pill.comp{background:transparent; color:var(--ink3); padding-left:0}
+.fx .hh{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px; font-variant-numeric:tabular-nums}
+.fx .chrow{margin-top:9px; gap:6px}
+.fx .ch{font-size:12px; padding:4px 9px 4px 5px}
+
+/* ---------- europe card ---------- */
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:16px; margin-bottom:14px; box-shadow:var(--shadow);
+}
+.card h3{
+  font-family:Archivo,sans-serif; font-weight:800; font-size:17px; margin:0 0 3px; letter-spacing:-.015em;
+}
+.card .sub{color:var(--ink2); font-size:13.5px; margin:0 0 14px}
+.euro{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.euro h4{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink3); margin:0 0 8px;
+}
+.euro ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
+.euro li{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600}
+.rivalbadge{
+  width:22px; height:22px; border-radius:99px; flex:none; display:flex; align-items:center;
+  justify-content:center; font-family:Archivo,sans-serif; font-weight:800; font-size:8.5px;
+  letter-spacing:.01em; border:1px solid rgba(0,0,0,.12);
+}
+.note{
+  display:flex; gap:9px; align-items:flex-start; font-size:13px; color:var(--ink2);
+  background:var(--surface2); border:1px solid var(--line); border-radius:10px; padding:11px 12px;
+}
+.note b{color:var(--ink); font-weight:700}
+/* aviso de "esto que ves no es de ahora" */
+.avisored{
+  display:flex; gap:9px; align-items:flex-start; font-size:12.5px; line-height:1.5;
+  color:var(--ink2); background:var(--surface2);
+  border:1px solid var(--line); border-left:3px solid var(--live);
+  border-radius:10px; padding:10px 12px; margin:0 0 16px;
+}
+.avisored b{color:var(--ink); font-weight:700}
+/* display:flex de arriba gana al [hidden] del navegador: hay que decirlo */
+.avisored[hidden]{display:none}
+
+/* ---------- guide ---------- */
+.guide{display:flex; flex-direction:column; gap:9px}
+.grow{display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:start; padding:11px 0; border-top:1px solid var(--line)}
+.grow:first-child{border-top:0; padding-top:0}
+.grow .txt{font-size:13.5px; color:var(--ink2)}
+.grow .txt b{display:block; color:var(--ink); font-family:Archivo,sans-serif; font-weight:700; font-size:14px; margin-bottom:1px}
+
+.empty{
+  text-align:center; padding:40px 20px; color:var(--ink2); font-size:14.5px;
+  border:1px dashed var(--line2); border-radius:var(--radius);
+}
+
+/* ---------- resultado / en juego ---------- */
+.rescard{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:14px; margin-bottom:14px; box-shadow:var(--shadow);
+}
+.rescard.playing{border-color:var(--live)}
+.rescard .lbl{
+  display:flex; align-items:center; gap:7px; margin-bottom:12px;
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--ink3);
+}
+.rescard.playing .lbl{color:var(--live)}
+.blink{width:7px; height:7px; border-radius:99px; background:var(--live); animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.28}}
+.resline{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px}
+.resline .t{display:flex; align-items:center; gap:8px; min-width:0}
+.resline .t.r{justify-content:flex-end}
+.resline .t span{
+  font-family:Archivo,sans-serif; font-weight:700; font-size:14px; letter-spacing:-.01em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.score{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:24px;
+  font-variant-numeric:tabular-nums; letter-spacing:.02em; white-space:nowrap;
+}
+.rescard .note{margin-top:12px; font-size:13px}
+/* el resumen escrito a mano se distingue de la lista automatica de goles */
+.rescard .note.resumen{border-left:3px solid var(--accent-line); color:var(--ink); line-height:1.5}
+.goles{
+  display:grid; grid-template-columns:1fr 1fr; gap:5px 16px;
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--line);
+  font-size:12.5px; line-height:1.35;
+}
+/* texto corrido, no cajas: asi el nombre no se parte por donde no debe */
+.goles .g{display:block; font-weight:600}
+.goles .g.l{grid-column:1; text-align:left}
+.goles .g.v{grid-column:2; text-align:right}
+.goles .min{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  color:var(--ink3); font-variant-numeric:tabular-nums;
+}
+.goles .g.l .min{margin-right:5px}
+.goles .g.v .min{margin-left:5px}
+.tarjetas{
+  display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:12px; padding-top:10px;
+  border-top:1px solid var(--line); font-size:12px; color:var(--ink2);
+}
+.tarjetas span{display:inline-flex; align-items:center; gap:6px}
+.carta{width:8px; height:11px; border-radius:1.5px; flex:none}
+.carta.amarilla{background:#E8B93A}
+.carta.roja{background:#D33A2C}
+.livelink{
+  display:block; text-align:center; margin-top:12px; padding:11px; border-radius:11px;
+  background:var(--live); color:#fff; text-decoration:none;
+  font-family:Archivo,sans-serif; font-weight:700; font-size:13.5px; letter-spacing:.01em;
+}
+.livelink:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+.scorepill{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px;
+  font-variant-numeric:tabular-nums; padding:2px 8px; border-radius:6px;
+  background:var(--sunk); color:var(--ink);
+}
+footer{
+  margin-top:34px; padding-top:16px; border-top:1px solid var(--line);
+  font-size:12.5px; color:var(--ink3); display:flex; flex-direction:column; gap:5px;
+}
+footer a{color:var(--ink2)}
+
+/* ---------- móvil ---------- */
+.mast.compact{padding-bottom:12px; margin-bottom:14px; border-bottom-width:1px}
+.mast.compact h1{font-size:clamp(21px,5.2vw,26px)}
+.mast.compact p{display:none}
+#pickerSec{margin-bottom:20px}
+#portada[hidden]{display:none}
+#portada .sec{margin:24px 0 12px}
+#portada .rescard{margin-bottom:14px}
+#pickerSec[hidden]{display:none}
+#hero, #pickerSec, #chosen{scroll-margin-top:14px}
+.morebtn{
+  width:100%; margin-top:10px; padding:12px; border-radius:12px;
+  border:1px dashed var(--line2); background:transparent; color:var(--ink2); cursor:pointer;
+  font-family:Archivo,sans-serif; font-weight:700; font-size:13px;
+}
+.morebtn:hover{color:var(--ink); border-color:var(--ink2)}
+.morebtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+@media (max-width:560px){
+  .euro{grid-template-columns:1fr; gap:16px}
+  .grid{grid-template-columns:repeat(auto-fill, minmax(66px,1fr)); gap:4px}
+  .wrap{
+    padding:calc(18px + env(safe-area-inset-top)) calc(13px + env(safe-area-inset-right))
+            calc(64px + env(safe-area-inset-bottom)) calc(13px + env(safe-area-inset-left));
+  }
+  .when{gap:8px 12px}
+  .when .day{font-size:16px}
+  .when .hh{font-size:17px}
+  .count{flex-basis:100%; margin-left:0; order:3}
+  .hero-in{padding:16px 14px 18px}
+  .side b{font-size:13.5px}
+  .fx{grid-template-columns:46px 1fr; gap:10px; padding:12px 11px}
+  .fx .opp{font-size:14.5px}
+  .tab{padding:11px 4px}
+  .linkbtn{padding:9px 13px}
+  .tbtn{padding:9px 2px 7px; font-size:11px}
+  .card{padding:14px}
+}
+@media (max-width:360px){
+  .grid{grid-template-columns:repeat(4, 1fr)}
+  .ch{font-size:11.5px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important} }
+</style>
+
+<div class="wrap">
+
+  <header class="mast" id="mast">
+    <div class="stamp" id="stamp">Temporada 2026/27</div>
+    <h1>¿En qué canal <em>juega</em> mi equipo?</h1>
+    <p>Elige tu equipo y deja de buscar. Próximos partidos de LaLiga y Europa, con el canal de cada uno.</p>
+  </header>
+
+  <div class="avisored" id="avisoRed" hidden></div>
+
+  <div class="chosen" id="chosen">
+    <span id="chosenCrest"></span>
+    <span class="who"><b id="chosenName"></b><span id="chosenSub"></span></span>
+    <button class="linkbtn" id="changeBtn" type="button" aria-expanded="false" aria-controls="pickerSec">Cambiar</button>
+  </div>
+
+  <section aria-labelledby="pickh" id="pickerSec">
+    <div class="pickhead">
+      <h2 class="sec" id="pickh">Elige equipo</h2>
+      <span class="stamp">20 equipos</span>
+    </div>
+    <div class="grid" id="picker" role="group" aria-labelledby="pickh"></div>
+  </section>
+
+  <div id="portada" hidden>
+    <div id="portadaStatus"></div>
+    <div id="portadaPanel"></div>
+  </div>
+
+  <div id="content" hidden>
+    <div id="status"></div>
+    <div id="hero"></div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-mios" aria-selected="true" aria-controls="panel">Mis partidos</button>
+      <button class="tab" role="tab" id="tab-jornada" aria-selected="false" aria-controls="panel">Estos días</button>
+      <button class="tab" role="tab" id="tab-europa" aria-selected="false" aria-controls="panel">Europa</button>
+    </div>
+
+    <div id="panel" role="tabpanel"></div>
+  </div>
+
+  <section style="margin-top:30px">
+    <h2 class="sec" style="margin-bottom:12px">Quién emite qué esta temporada</h2>
+    <div class="card">
+      <div class="guide" id="guide"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Horarios y canales de <a href="https://www.futbolenlatv.es/" target="_blank" rel="noopener">futbolenlatv.es</a>, reparto de derechos verificado con prensa especializada. LaLiga confirma canal y hora unas dos semanas antes de cada jornada: lo que aparece como <em>por confirmar</em> aún no está asignado.</span>
+    <span>Hecho en casa, para la familia. Los escudos son de cada club y se usan solo para identificar los equipos. Resultados actualizados cada mañana.</span>
+  </footer>
+</div>
+
+<script>/*RESULTS_START*/window.__RESULTS__={"2026-08-24|malaga|deportivo":{"as":1,"hs":1,"note":"Aubameyang adelantó al Dépor en el 21 y Chupete empató de penalti en el 34. Reparto de puntos en La Rosaleda tras una segunda parte sin goles.","status":"ft"},"2026-08-24|osasuna|levante":{"as":0,"hs":0,"note":"Empate sin goles en El Sadar. Osasuna y Levante firmaron un partido trabado y se reparten un punto.","status":"ft"},"2026-08-25|valencia|betis":{"as":1,"hs":0,"note":"Pablo García decidió en el 83 con el único gol del partido, el primero suyo en LaLiga. El Valencia se quedó sin premio en Mestalla.","status":"ft"},"2026-08-26|realmadrid|realsociedad":{"as":1,"hs":4,"note":"Hat-trick de Mbappé (40', 60' y 80') y gol de Vinícius. Sucic había empatado antes del descanso, pero el Bernabéu acabó goleando.","status":"ft"},"2026-08-27|barcelona|athletic":{"as":0,"hs":2,"note":"Raphinha abrió el marcador en el 37 tras irse del portero y Fermín sentenció en el 82 aprovechando un error de Laporte. Segunda victoria seguida.","status":"ft"},"2026-08-27|celta|osasuna":{"as":2,"hs":1,"note":"Aspas adelantó al Celta, pero la roja a Marcos Alonso en el 51 lo cambió todo: Kike Barja empató y Budimir sentenció de penalti.","status":"ft"},"2026-08-28|alaves|villarreal":{"as":0,"hs":1,"note":"Gol de Lucas Boyé en el 31 y a defender. El Alavés aguantó el 1-0 en Mendizorroza y duerme líder; el Villarreal sigue sin ganar.","status":"ft"},"2026-08-28|racing|elche":{"as":2,"hs":3,"note":"Hat-trick de Zabiri antes del descanso para un 3-0, pero el Elche apretó con dos goles en dos minutos (78' y 79') y el Racing acabó pidiendo la hora.","status":"ft"}};/*RESULTS_END*/</script>
+<script>window.__CRESTS__={"alaves":"escudos/alaves.webp","athletic":"escudos/athletic.webp","atletico":"escudos/atletico.webp","barcelona":"escudos/barcelona.webp","betis":"escudos/betis.webp","celta":"escudos/celta.webp","deportivo":"escudos/deportivo.webp","elche":"escudos/elche.webp","espanyol":"escudos/espanyol.webp","getafe":"escudos/getafe.webp","levante":"escudos/levante.webp","malaga":"escudos/malaga.webp","osasuna":"escudos/osasuna.webp","racing":"escudos/racing.webp","rayo":"escudos/rayo.webp","realmadrid":"escudos/realmadrid.webp","realsociedad":"escudos/realsociedad.webp","sevilla":"escudos/sevilla.webp","valencia":"escudos/valencia.webp","villarreal":"escudos/villarreal.webp","arsenal":"escudos/arsenal.webp","astonvilla":"escudos/astonvilla.webp","liverpool":"escudos/liverpool.webp","mancity":"escudos/mancity.webp","manutd":"escudos/manutd.webp","psg":"escudos/psg.webp","lille":"escudos/lille.webp","bayern":"escudos/bayern.webp","dortmund":"escudos/dortmund.webp","leipzig":"escudos/leipzig.webp","stuttgart":"escudos/stuttgart.webp","aek":"escudos/aek.webp","roma":"escudos/roma.webp","como":"escudos/como.webp","inter":"escudos/inter.webp","napoli":"escudos/napoli.webp","feyenoord":"escudos/feyenoord.webp","psv":"escudos/psv.webp","viking":"escudos/viking.webp","bodo":"escudos/bodo.webp","porto":"escudos/porto.webp","sporting":"escudos/sporting.webp","fenerbahce":"escudos/fenerbahce.webp","galatasaray":"escudos/galatasaray.webp","shakhtar":"escudos/shakhtar.webp","lask":"escudos/lask.webp","slavia":"escudos/slavia.webp"};window.__LIVE__="datos/resultados.json";window.__LIVE_REMOTO__="https://futbol.js-tech.es/datos/resultados.json";</script>
+<script>
+(function(){
+"use strict";
+
+/* el móvil debe escalar a la anchura real del dispositivo */
+if(!document.querySelector('meta[name="viewport"]')){
+  var vp = document.createElement("meta");
+  vp.name = "viewport"; vp.content = "width=device-width, initial-scale=1, viewport-fit=cover";
+  document.head.appendChild(vp);
+}
+
+/* ================= equipos ================= */
+var T = {
+  athletic:{n:"Athletic Club", s:"Athletic", m:"ATH", p:"stripes", c1:"#EE2523", c2:"#FFFFFF", b:"#EE2523"},
+  atletico:{n:"Atlético de Madrid", s:"Atlético", m:"ATM", p:"stripes", c1:"#CB3524", c2:"#FFFFFF", b:"#26346B"},
+  alaves:{n:"Deportivo Alavés", s:"Alavés", m:"ALA", p:"stripes", c1:"#0761AF", c2:"#FFFFFF", b:"#0761AF"},
+  barcelona:{n:"FC Barcelona", s:"Barça", m:"FCB", p:"stripes", c1:"#004D98", c2:"#A50044", b:"#A50044"},
+  betis:{n:"Real Betis", s:"Betis", m:"BET", p:"stripes", c1:"#00954C", c2:"#FFFFFF", b:"#00954C"},
+  celta:{n:"RC Celta", s:"Celta", m:"CEL", p:"solid", c1:"#8AC3EE", c2:"#FFFFFF", b:"#E4002B"},
+  deportivo:{n:"RC Deportivo", s:"Dépor", m:"DEP", p:"stripes", c1:"#0055A5", c2:"#FFFFFF", b:"#0055A5"},
+  elche:{n:"Elche CF", s:"Elche", m:"ELC", p:"stripes", c1:"#036E37", c2:"#FFFFFF", b:"#036E37"},
+  espanyol:{n:"RCD Espanyol", s:"Espanyol", m:"ESP", p:"stripes", c1:"#0072CE", c2:"#FFFFFF", b:"#0072CE"},
+  getafe:{n:"Getafe CF", s:"Getafe", m:"GET", p:"solid", c1:"#005999", c2:"#FFFFFF", b:"#003C6B"},
+  levante:{n:"Levante UD", s:"Levante", m:"LEV", p:"stripes", c1:"#004B9F", c2:"#C4122E", b:"#004B9F"},
+  malaga:{n:"Málaga CF", s:"Málaga", m:"MAL", p:"stripes", c1:"#1A3B84", c2:"#FFFFFF", b:"#1A3B84"},
+  osasuna:{n:"CA Osasuna", s:"Osasuna", m:"OSA", p:"solid", c1:"#C8102E", c2:"#FFFFFF", b:"#0A2352"},
+  racing:{n:"Racing de Santander", s:"Racing", m:"RAC", p:"stripes", c1:"#00A651", c2:"#FFFFFF", b:"#00A651"},
+  rayo:{n:"Rayo Vallecano", s:"Rayo", m:"RAY", p:"sash", c1:"#FFFFFF", c2:"#E53027", b:"#E53027"},
+  realmadrid:{n:"Real Madrid", s:"Madrid", m:"RMA", p:"solid", c1:"#FFFFFF", c2:"#FEBE10", b:"#00529F"},
+  realsociedad:{n:"Real Sociedad", s:"R. Sociedad", m:"RSO", p:"stripes", c1:"#0067B1", c2:"#FFFFFF", b:"#0067B1"},
+  sevilla:{n:"Sevilla FC", s:"Sevilla", m:"SEV", p:"band", c1:"#FFFFFF", c2:"#D81920", b:"#D81920"},
+  valencia:{n:"Valencia CF", s:"Valencia", m:"VAL", p:"band", c1:"#FFFFFF", c2:"#EE7203", b:"#EE7203"},
+  villarreal:{n:"Villarreal CF", s:"Villarreal", m:"VIL", p:"solid", c1:"#FFE667", c2:"#005187", b:"#005187"}
+};
+var ORDER = ["alaves","athletic","atletico","barcelona","betis","celta","deportivo","elche","espanyol","getafe","levante","malaga","osasuna","racing","rayo","realmadrid","realsociedad","sevilla","valencia","villarreal"];
+
+/* ================= canales ================= */
+var CH = {
+  mlaliga:{n:"M+ LaLiga", dial:"dial 54", k:"lg-m", lg:"M+"},
+  mplus:{n:"Movistar Plus+", dial:"dial 7", k:"lg-m", lg:"M+"},
+  mchamp:{n:"M+ Liga de Campeones", dial:"dial 60", k:"lg-mc", lg:"M+"},
+  dazn:{n:"DAZN LaLiga", dial:"dial 55", k:"lg-dz", lg:"DAZN"},
+  dazn2:{n:"DAZN LaLiga 2", dial:"dial 58", k:"lg-dz", lg:"DAZN"},
+  daznfree:{n:"DAZN gratis", dial:"app", k:"lg-dz", lg:"DAZN", free:true},
+  orange:{n:"Orange Fútbol 1", dial:"dial 107", k:"lg-or", lg:"orange"},
+  tbd:{n:"Por confirmar", tbd:true}
+};
+
+/* ================= partidos LaLiga ================= */
+/* [fecha, hora, local, visitante, canales] — hora peninsular */
+var M = [
+["2026-08-27","20:30","celta","osasuna",["mlaliga"]],
+["2026-08-27","21:00","barcelona","athletic",["dazn"]],
+
+["2026-08-28","19:00","racing","elche",["dazn2","daznfree"]],
+["2026-08-28","21:30","alaves","villarreal",["dazn"]],
+["2026-08-29","17:00","levante","betis",["dazn"]],
+["2026-08-29","19:00","realsociedad","espanyol",["mlaliga"]],
+["2026-08-29","21:30","sevilla","atletico",["mlaliga"]],
+["2026-08-30","17:00","realmadrid","malaga",["mlaliga","orange"]],
+["2026-08-30","19:30","deportivo","valencia",["dazn"]],
+["2026-08-30","21:30","celta","athletic",["mlaliga"]],
+["2026-08-31","19:30","osasuna","getafe",["mlaliga"]],
+["2026-08-31","21:30","barcelona","rayo",["dazn"]],
+
+["2026-09-03","21:00","realsociedad","celta",["mlaliga"]],
+["2026-09-04","21:00","betis","realmadrid",["mlaliga"]],
+["2026-09-05","16:15","athletic","atletico",["mlaliga","orange"]],
+["2026-09-05","18:30","rayo","racing",["mlaliga"]],
+["2026-09-05","21:00","villarreal","deportivo",["mlaliga"]],
+["2026-09-06","16:15","valencia","barcelona",["mlaliga"]],
+["2026-09-06","18:30","alaves","osasuna",["mlaliga"]],
+["2026-09-06","18:30","malaga","levante",["mlaliga"]],
+["2026-09-06","21:00","espanyol","sevilla",["mlaliga","daznfree"]],
+["2026-09-07","19:00","getafe","celta",["mlaliga"]],
+["2026-09-07","21:30","elche","realsociedad",["mlaliga"]],
+
+["2026-09-13","17:00","realsociedad","atletico",["tbd"]],
+["2026-09-13","17:00","athletic","elche",["tbd"]],
+["2026-09-13","17:00","villarreal","betis",["mlaliga","orange"]],
+["2026-09-13","17:00","realmadrid","rayo",["tbd"]],
+["2026-09-13","17:00","sevilla","valencia",["tbd"]],
+["2026-09-13","17:00","getafe","deportivo",["tbd"]],
+["2026-09-13","17:00","celta","malaga",["tbd"]],
+["2026-09-13","17:00","racing","alaves",["tbd"]],
+["2026-09-13","17:00","levante","barcelona",["tbd"]],
+["2026-09-13","17:00","osasuna","espanyol",["tbd"]],
+
+["2026-09-16","17:00","atletico","osasuna",["tbd"]],
+["2026-09-16","17:00","levante","athletic",["tbd"]],
+["2026-09-16","17:00","malaga","villarreal",["tbd"]],
+["2026-09-16","17:00","betis","getafe",["tbd"]],
+["2026-09-16","17:00","elche","realmadrid",["mlaliga","orange"]],
+["2026-09-16","17:00","alaves","valencia",["tbd"]],
+["2026-09-16","17:00","deportivo","sevilla",["tbd"]],
+["2026-09-16","17:00","rayo","espanyol",["tbd"]],
+["2026-09-16","17:00","barcelona","racing",["tbd"]],
+
+["2026-09-20","17:00","atletico","realmadrid",["tbd"]],
+["2026-09-20","17:00","athletic","alaves",["tbd"]],
+["2026-09-20","17:00","villarreal","levante",["tbd"]],
+["2026-09-20","17:00","deportivo","betis",["tbd"]],
+["2026-09-20","17:00","sevilla","barcelona",["mlaliga","orange"]],
+["2026-09-20","17:00","espanyol","elche",["tbd"]],
+["2026-09-20","17:00","getafe","malaga",["tbd"]],
+["2026-09-20","17:00","celta","racing",["tbd"]],
+["2026-09-20","17:00","valencia","realsociedad",["tbd"]],
+["2026-09-20","17:00","osasuna","rayo",["tbd"]],
+
+["2026-10-11","17:00","alaves","atletico",["tbd"]],
+["2026-10-11","17:00","rayo","athletic",["tbd"]],
+["2026-10-11","17:00","realmadrid","villarreal",["tbd"]],
+["2026-10-11","17:00","betis","osasuna",["tbd"]],
+["2026-10-11","17:00","levante","sevilla",["tbd"]],
+["2026-10-11","17:00","elche","celta",["tbd"]],
+["2026-10-11","17:00","racing","valencia",["tbd"]],
+["2026-10-11","17:00","malaga","espanyol",["tbd"]],
+["2026-10-11","17:00","barcelona","getafe",["tbd"]],
+["2026-10-11","17:00","realsociedad","deportivo",["tbd"]],
+
+["2026-10-18","17:00","espanyol","atletico",["tbd"]],
+["2026-10-18","17:00","valencia","athletic",["tbd"]],
+["2026-10-18","17:00","villarreal","elche",["tbd"]],
+["2026-10-18","17:00","betis","barcelona",["tbd"]],
+["2026-10-18","17:00","realmadrid","sevilla",["tbd"]],
+["2026-10-18","17:00","deportivo","levante",["tbd"]],
+["2026-10-18","17:00","celta","alaves",["tbd"]],
+["2026-10-18","17:00","osasuna","racing",["tbd"]],
+["2026-10-18","17:00","getafe","rayo",["tbd"]],
+["2026-10-18","17:00","malaga","realsociedad",["tbd"]],
+
+["2026-10-25","17:00","barcelona","realmadrid",["tbd"]],
+["2026-10-25","17:00","celta","betis",["tbd"]],
+["2026-10-25","17:00","sevilla","osasuna",["tbd"]],
+["2026-10-25","17:00","rayo","elche",["tbd"]],
+["2026-10-25","17:00","alaves","malaga",["tbd"]],
+["2026-10-25","17:00","racing","espanyol",["tbd"]],
+["2026-10-25","17:00","atletico","deportivo",["tbd"]],
+["2026-10-25","17:00","valencia","villarreal",["tbd"]],
+["2026-10-25","17:00","realsociedad","levante",["tbd"]]
+];
+
+/* ================= Europa ================= */
+var EU = {
+  granates:{},
+  ucl:{
+    barcelona:{h:["mancity","astonvilla","feyenoord","como"], a:["psg","sporting","galatasaray","sabah"]},
+    realmadrid:{h:["inter","psv","leipzig","lask"], a:["arsenal","roma","shakhtar","aek"]},
+    atletico:{h:["bayern","manutd","fenerbahce","viking"], a:["liverpool","psv","bodo","stuttgart"]},
+    villarreal:{h:["psg","manutd","napoli","sabah"], a:["liverpool","dortmund","fenerbahce","slavia"]},
+    betis:{h:["arsenal","porto","feyenoord","como"], a:["bayern","dortmund","lille","slovan"]}
+  },
+  uel:{
+    realsociedad:{h:["lyon","plzen","bournemouth","torreense"], a:["juventus","unionsg","palace","lillestrom"]},
+    celta:{h:["juventus","unionsg","bournemouth","lillestrom"], a:["marsella","celtic","omonia","beersheva"]}
+  },
+  conf:{
+    getafe:{h:["brighton","lugano","escaldes"], a:["ajax","craiova","iberia"]}
+  }
+};
+var R = {
+  lyon:{n:"Lyon", c:"#1B2C63", t:"#fff"}, plzen:{n:"Viktoria Plzen", c:"#004B93", t:"#fff"},
+  bournemouth:{n:"Bournemouth", c:"#DA291C", t:"#fff"}, torreense:{n:"Torreense", c:"#1B7A43", t:"#fff"},
+  juventus:{n:"Juventus", c:"#1A1A1A", t:"#fff"}, unionsg:{n:"Union SG", c:"#FFD400", t:"#111"},
+  palace:{n:"Crystal Palace", c:"#1B458F", t:"#fff"}, lillestrom:{n:"Lillestrom", c:"#FFD200", t:"#111"},
+  marsella:{n:"Marsella", c:"#2FAEE0", t:"#fff"}, celtic:{n:"Celtic", c:"#018749", t:"#fff"},
+  omonia:{n:"Omonia", c:"#00A650", t:"#fff"}, beersheva:{n:"H. Beer-Sheva", c:"#C8102E", t:"#fff"},
+  brighton:{n:"Brighton", c:"#0057B8", t:"#fff"}, lugano:{n:"Lugano", c:"#1A1A1A", t:"#fff"},
+  escaldes:{n:"Inter d'Escaldes", c:"#0B2A6B", t:"#fff"}, ajax:{n:"Ajax", c:"#D2122E", t:"#fff"},
+  craiova:{n:"U. Craiova", c:"#1B4F9C", t:"#fff"}, iberia:{n:"Iberia 1999", c:"#7A1F2B", t:"#fff"},
+  mancity:{n:"Man City", c:"#6CABDD", t:"#0a2540"}, astonvilla:{n:"Aston Villa", c:"#670E36", t:"#fff"},
+  feyenoord:{n:"Feyenoord", c:"#DA020E", t:"#fff"}, como:{n:"Como", c:"#0B2A6B", t:"#fff"},
+  psg:{n:"PSG", c:"#004170", t:"#fff"}, sporting:{n:"Sporting CP", c:"#008057", t:"#fff"},
+  galatasaray:{n:"Galatasaray", c:"#A90432", t:"#FFD200"}, sabah:{n:"Sabah", c:"#1E5AA8", t:"#fff"},
+  inter:{n:"Inter", c:"#0B1F3B", t:"#fff"}, psv:{n:"PSV", c:"#ED1C24", t:"#fff"},
+  leipzig:{n:"RB Leipzig", c:"#DD0741", t:"#fff"}, lask:{n:"LASK", c:"#1A1A1A", t:"#fff"},
+  arsenal:{n:"Arsenal", c:"#EF0107", t:"#fff"}, roma:{n:"Roma", c:"#8E1F2F", t:"#F0BC42"},
+  shakhtar:{n:"Shakhtar", c:"#F26522", t:"#111"}, aek:{n:"AEK Atenas", c:"#F4C21B", t:"#111"},
+  bayern:{n:"Bayern", c:"#DC052D", t:"#fff"}, manutd:{n:"Man United", c:"#DA291C", t:"#fff"},
+  fenerbahce:{n:"Fenerbahçe", c:"#0B2C63", t:"#FFED00"}, viking:{n:"Viking", c:"#14387F", t:"#fff"},
+  liverpool:{n:"Liverpool", c:"#C8102E", t:"#fff"}, bodo:{n:"Bodø/Glimt", c:"#F5D033", t:"#111"},
+  stuttgart:{n:"Stuttgart", c:"#E32219", t:"#fff"}, dortmund:{n:"Dortmund", c:"#FDE100", t:"#111"},
+  napoli:{n:"Nápoles", c:"#12A0D7", t:"#fff"}, slavia:{n:"Slavia Praga", c:"#D7132B", t:"#fff"},
+  porto:{n:"Oporto", c:"#00428C", t:"#fff"}, lille:{n:"Lille", c:"#E01E13", t:"#fff"},
+  slovan:{n:"Slovan", c:"#003DA5", t:"#fff"}
+};
+
+/* ================= escudos ================= */
+/* Escudos dibujados a mano en SVG: heráldica y colores reales de cada club,
+   no los logotipos oficiales. Campo del escudo = 0..40 x 0..31; debajo va la cinta. */
+function R_(x,y,w,h,f){ return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+f+'"/>'; }
+function vstripes(n, a, b, y, h){
+  var w = 40/n, out = "";
+  for(var i=0;i<n;i++) out += R_(i*w, y, w+0.05, h, i%2 ? b : a);
+  return out;
+}
+function star(cx, cy, r, f){
+  var pts = [];
+  for(var i=0;i<10;i++){
+    var ang = Math.PI/2 + i*Math.PI/5, rr = i%2 ? r*0.42 : r;
+    pts.push((cx + rr*Math.cos(ang)).toFixed(2) + "," + (cy - rr*Math.sin(ang)).toFixed(2));
+  }
+  return '<polygon points="'+pts.join(" ")+'" fill="'+f+'"/>';
+}
+
+function field(id, t){
+  switch(id){
+    case "barcelona":
+      return R_(0,0,20,14,"#FFFFFF") + R_(8.6,0,3,14,"#DA291C") + R_(0,5.5,20,3,"#DA291C")
+           + R_(20,0,20,14,"#FCDD09")
+           + R_(20,1.4,20,1.7,"#DA291C") + R_(20,4.8,20,1.7,"#DA291C")
+           + R_(20,8.2,20,1.7,"#DA291C") + R_(20,11.6,20,1.7,"#DA291C")
+           + vstripes(5,"#004D98","#A50044",14,17)
+           + '<circle cx="20" cy="24" r="3.1" fill="#FFFFFF"/>';
+    case "atletico":
+      return vstripes(7,"#CB3524","#FFFFFF",0,19) + R_(0,19,40,12,"#26346B")
+           + star(11,25,3.1,"#FFFFFF") + star(20,25,3.1,"#FFFFFF") + star(29,25,3.1,"#FFFFFF");
+    case "athletic":
+      return vstripes(7,"#EE2523","#FFFFFF",0,31)
+           + R_(0,0,40,8.5,"#FFFFFF") + R_(18.4,0.8,3.2,7,"#EE2523") + R_(12.5,3,14,3,"#EE2523");
+    case "celta":
+      return R_(0,0,40,31,"#8AC3EE") + R_(17.5,0,5,31,"#E4002B") + R_(0,12,40,5,"#E4002B");
+    case "osasuna":
+      return R_(0,0,40,31,"#C8102E") + R_(0,0,40,7,"#0A2352")
+           + '<circle cx="20" cy="19" r="7" fill="none" stroke="#F4C21B" stroke-width="2.2"/>'
+           + '<circle cx="20" cy="19" r="2" fill="#F4C21B"/>';
+    case "rayo":
+      return R_(0,0,40,31,"#FFFFFF") + '<path d="M-6 26 L26 -6 L40 4 L6 34 Z" fill="#E53027"/>';
+    case "sevilla":
+      return R_(0,0,40,31,"#FFFFFF") + R_(16,0,8,31,"#D81920") + R_(0,0,40,5,"#D81920");
+    case "valencia":
+      return R_(0,0,40,31,"#FFFFFF") + R_(0,0,40,5,"#EE7203") + R_(0,23,40,5,"#EE7203")
+           + '<path d="M7 12.5 L14.5 17 L20 13 L25.5 17 L33 12.5 L30.5 20 L20 16.8 L9.5 20 Z" fill="#111111"/>';
+    case "villarreal":
+      return R_(0,0,40,31,"#FFE667") + R_(0,0,40,5,"#005187");
+    case "getafe":
+      return R_(0,0,40,31,"#005999") + R_(0,0,40,4,"#FFFFFF") + R_(0,27,40,4,"#FFFFFF");
+    case "betis":   return vstripes(9,"#00954C","#FFFFFF",0,31);
+    case "elche":   return vstripes(5,"#036E37","#FFFFFF",0,31);
+    case "racing":  return vstripes(6,"#00A651","#FFFFFF",0,31);
+    case "espanyol":return vstripes(7,"#0072CE","#FFFFFF",0,31);
+    case "alaves":  return vstripes(7,"#0761AF","#FFFFFF",0,31);
+    case "deportivo":return vstripes(6,"#0055A5","#FFFFFF",0,31);
+    case "malaga":  return vstripes(6,"#1A3B84","#FFFFFF",0,31);
+    case "realsociedad": return vstripes(6,"#0067B1","#FFFFFF",0,31);
+    case "levante": return vstripes(6,"#004B9F","#C4122E",0,31);
+    default:
+      return R_(0,0,40,31,t.c1) + R_(0,0,40,4,t.c2);
+  }
+}
+
+var SHIELD = "M3 1.5 H37 V24 C37 33.5 30.2 39.4 20 43.2 C9.8 39.4 3 33.5 3 24 Z";
+
+var IMG = window.__CRESTS__ || {};
+var RES = window.__RESULTS__ || {};
+
+/* Rivales que esta web no conoce: el PSG en la Champions, un Tercera en la
+   Copa. El actualizador guarda su nombre y su escudo dentro de la entrada del
+   partido; aqui se dan de alta como un equipo mas, y a partir de ahi el resto
+   del codigo (escudos, marcadores, fichas) los trata igual que a los de casa. */
+function registraAjenos(res){
+  for(var k in res){
+    if(!Object.prototype.hasOwnProperty.call(res, k)) continue;
+    var eq = res[k] && res[k].eq;
+    if(!eq) continue;
+    for(var id in eq){
+      if(!Object.prototype.hasOwnProperty.call(eq, id)) continue;
+      if(T[id]) continue;
+      var f = eq[id] || {}, r = R[id];
+      if(r){
+        /* rival europeo que ya sale en la ficha de la Champions: nombre,
+           color y escudo de casa, mejores que los que da la API */
+        T[id] = {n:r.n, s:r.n, m:(f.m || r.n.slice(0,3)).toUpperCase(), p:"solid",
+                 c1:r.c, c2:"#FFFFFF", b:r.c, ajeno:true};
+      } else {
+        T[id] = {n:f.n || id, s:f.s || f.n || id, m:f.m || "", p:"solid",
+                 c1:"#E7EAF0", c2:"#FFFFFF", b:"#5B6577", ajeno:true};
+      }
+      if(!IMG[id] && f.logo) IMG[id] = f.logo;
+    }
+  }
+}
+registraAjenos(RES);
+function reskey(m){ return m.date + "|" + m.h + "|" + m.a; }
+function result(m){ return RES[reskey(m)] || null; }
+function liveUrl(m){
+  return "https://www.google.com/search?q=" +
+    encodeURIComponent(T[m.h].n + " " + T[m.a].n + " resultado en directo");
+}
+
+function crest(id, size){
+  var t = T[id]; if(!t) return "";
+  var s = size || 40, u = "c" + id + Math.round(s * 10);
+
+  /* escudo oficial si lo tenemos incrustado; si no, el dibujado */
+  if(IMG[id]){
+    return '<img class="crest" src="'+IMG[id]+'" alt="" width="'+s+'" height="'+s+'" decoding="async">';
+  }
+
+  /* el Real Madrid es un escudo circular, no un blasón */
+  if(id === "realmadrid"){
+    return '<svg width="'+s+'" height="'+(s*1.1)+'" viewBox="0 0 40 44" aria-hidden="true" focusable="false">'
+      + '<circle cx="20" cy="22" r="18.5" fill="#FFFFFF"/>'
+      + '<circle cx="20" cy="22" r="18.5" fill="none" stroke="#00529F" stroke-width="2.6"/>'
+      + '<circle cx="20" cy="22" r="14.4" fill="none" stroke="#00529F" stroke-width="1"/>'
+      + '<path d="M13 12 v-3.6 l2.6 2 L20 5.6 l4.4 4.8 2.6-2 V12 Z" fill="#FEBE10" stroke="#C9930A" stroke-width=".5"/>'
+      + '<path d="M28.5 14 L33.6 14 L28 33 L22.9 33 Z" fill="#5C2D91" opacity=".9"/>'
+      + '<text x="19" y="28" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="13" fill="#00529F">RM</text>'
+      + '</svg>';
+  }
+
+  return '<svg width="'+s+'" height="'+(s*1.1)+'" viewBox="0 0 40 44" aria-hidden="true" focusable="false">'
+    + '<defs><clipPath id="'+u+'"><path d="'+SHIELD+'"/></clipPath></defs>'
+    + '<g clip-path="url(#'+u+')">' + field(id, t)
+    + R_(0,31,40,13,t.b)
+    + '<text x="20" y="40.2" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="8.6" letter-spacing="0.3" fill="#fff">'+t.m+'</text>'
+    + '</g><path d="'+SHIELD+'" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.7"/></svg>';
+}
+
+/* ================= utilidades ================= */
+var WD = ["dom","lun","mar","mié","jue","vie","sáb"];
+var MO = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+var MOL = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var WDL = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+function ts(date, time){
+  /* horario peninsular: CEST (+02:00) hasta el 25 de octubre de 2026, CET (+01:00) después */
+  var off = date >= "2026-10-25" ? "+01:00" : "+02:00";
+  return new Date(date + "T" + time + ":00" + off);
+}
+function mismoDia(a,b){
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+/* "Hoy", "Mañana", "Ayer" o el día entero: en el móvil se lee mucho mejor */
+function etiquetaDia(d){
+  var hoy = new Date();
+  if(mismoDia(d, hoy)) return "Hoy";
+  if(mismoDia(d, new Date(hoy.getTime()+86400000))) return "Mañana";
+  if(mismoDia(d, new Date(hoy.getTime()-86400000))) return "Ayer";
+  return WDL[d.getDay()]+" "+d.getDate()+" de "+MOL[d.getMonth()];
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+function chipHTML(id){
+  var c = CH[id]; if(!c) return "";
+  if(c.tbd) return '<span class="ch tbd">Canal por confirmar</span>';
+  if(c.free) return '<span class="freetag">Gratis en DAZN</span>';
+  return '<span class="ch"><span class="logo '+c.k+'">'+esc(c.lg)+'</span>'
+    + esc(c.n) + ' <span class="dial">'+esc(c.dial)+'</span></span>';
+}
+function chRow(list){
+  var free = list.indexOf("daznfree") > -1;
+  var out = list.map(chipHTML).join("");
+  if(free && list.length > 1){
+    /* la etiqueta de gratis va primero */
+    out = chipHTML("daznfree") + list.filter(function(x){return x!=="daznfree";}).map(chipHTML).join("");
+  }
+  return '<div class="chrow">'+out+'</div>';
+}
+
+/* ================= estado ================= */
+var sel = null, tab = "mios", timer = null, showAll = false;
+var refrescar = null;   /* lo rellena el bloque de directo, si esta activo */
+try{ sel = localStorage.getItem("miEquipo"); }catch(e){}
+if(!T[sel]) sel = null;
+
+var picker = document.getElementById("picker");
+var chosen = document.getElementById("chosen");
+var content = document.getElementById("content");
+var panel = document.getElementById("panel");
+var heroEl = document.getElementById("hero");
+var portadaEl = document.getElementById("portada");
+
+/* ---- picker ---- */
+ORDER.forEach(function(id){
+  var b = document.createElement("button");
+  b.type = "button"; b.className = "tbtn"; b.setAttribute("aria-pressed","false");
+  b.dataset.id = id;
+  b.innerHTML = crest(id, 40) + "<span>" + esc(T[id].s) + "</span>";
+  b.addEventListener("click", function(){ choose(id); });
+  picker.appendChild(b);
+});
+
+var pickerSec = document.getElementById("pickerSec");
+var mast = document.getElementById("mast");
+var changeBtn = document.getElementById("changeBtn");
+
+changeBtn.addEventListener("click", function(){
+  var open = pickerSec.hasAttribute("hidden");
+  if(open){ pickerSec.removeAttribute("hidden"); }
+  else { pickerSec.setAttribute("hidden",""); }
+  changeBtn.setAttribute("aria-expanded", String(open));
+  changeBtn.textContent = open ? "Cerrar" : "Cambiar";
+  if(open) pickerSec.scrollIntoView({behavior:"smooth", block:"start"});
+});
+
+["mios","jornada","europa"].forEach(function(k){
+  document.getElementById("tab-"+k).addEventListener("click", function(){
+    tab = k; syncTabs(); render();
+  });
+});
+function syncTabs(){
+  ["mios","jornada","europa"].forEach(function(k){
+    document.getElementById("tab-"+k).setAttribute("aria-selected", String(k===tab));
+  });
+}
+
+function choose(id){
+  var first = !sel;
+  sel = id; showAll = false;
+  try{ localStorage.setItem("miEquipo", id); }catch(e){}
+  pickerSec.setAttribute("hidden","");
+  changeBtn.setAttribute("aria-expanded","false");
+  changeBtn.textContent = "Cambiar";
+  render();
+  if(refrescar) refrescar();   /* al elegir equipo, marcador fresco al momento */
+  if(!first) chosen.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ================= render ================= */
+function myMatches(){
+  var now = Date.now();
+  return M.filter(function(m){ return m[2]===sel || m[3]===sel; })
+    .map(decorate)
+    .filter(function(m){ return m.t.getTime() > now - 7200000; })
+    .sort(function(a,b){ return a.t - b.t; });
+}
+function decorate(m){
+  return {raw:m, t:ts(m[0],m[1]), date:m[0], time:m[1], h:m[2], a:m[3], ch:m[4]};
+}
+
+function render(){
+  if(!sel){
+    content.hidden = true; chosen.className = "chosen";
+    pickerSec.removeAttribute("hidden"); mast.className = "mast";
+    portadaEl.hidden = false; renderPortada();
+    return;
+  }
+  portadaEl.hidden = true;
+  var t = T[sel];
+  mast.className = "mast compact";
+  chosen.className = "chosen on";
+  document.getElementById("chosenCrest").innerHTML = crest(sel, 34);
+  document.getElementById("chosenName").textContent = t.n;
+  var list = myMatches();
+  document.getElementById("chosenSub").textContent = list.length
+    ? list.length + " partidos por delante" : "Sin partidos programados";
+  content.hidden = false;
+  Array.prototype.forEach.call(picker.children, function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.id === sel));
+  });
+  var playing = renderStatus();
+  renderHero(list.filter(function(m){ return !playing || reskey(m) !== reskey(playing); })[0]);
+  if(tab === "mios") renderList(list);
+  else if(tab === "jornada") renderRound();
+  else renderEurope();
+}
+
+/* Un partido en juego, o el último que terminó en los últimos 4 días. */
+function renderStatus(){
+  var box = document.getElementById("status");
+  var now = Date.now();
+  var mine = M.filter(function(m){ return m[2]===sel || m[3]===sel; }).map(decorate)
+              .sort(function(a,b){ return b.t - a.t; });
+
+  var playing = null, last = null;
+  for(var i=0;i<mine.length;i++){
+    var m = mine[i], gone = now - m.t.getTime(), r = result(m);
+    if(gone >= -60000 && gone < 9000000 && (!r || r.status !== "ft")){ playing = m; break; }
+    if(gone > 0 && gone < 4*86400000 && r){ last = m; break; }
+  }
+
+  if(playing){
+    var pr = result(playing);
+    var vivo = "Se está jugando ahora";
+    if(pr && pr.minute) vivo = "En juego · minuto " + pr.minute;
+    else if(pr && pr.half) vivo = "Descanso";
+    box.innerHTML = '<div class="rescard playing"><div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
+      + resline(playing, pr ? pr.hs + " - " + pr.as : "· ·")
+      + detalleHTML(pr)
+      + '<a class="livelink" href="'+esc(liveUrl(playing))+'" target="_blank" rel="noopener">Ver el marcador en directo</a>'
+      + '</div>';
+    return playing;
+  }
+  if(last){
+    var lr = result(last);
+    box.innerHTML = '<div class="rescard"><div class="lbl">Último resultado</div>'
+      + resline(last, lr.hs + " - " + lr.as)
+      + detalleHTML(lr)
+      + '</div>';
+    return null;
+  }
+  box.innerHTML = "";
+  return null;
+}
+/* Goles y tarjetas, cuando la fuente los da. Los goles van en dos columnas:
+   los del local a la izquierda, los del visitante a la derecha. */
+function detalleHTML(r){
+  if(!r) return "";
+  var out = "";
+  var goles = r.goles || [];
+  if(goles.length){
+    out += '<div class="goles">' + goles.map(function(g){
+      var lado = g.equipo === "visitante" ? "v" : "l";
+      /* el (p) va pegado al nombre: nunca se separa al pasar de linea */
+      /* espacio duro: el (p) nunca se queda huerfano en la linea siguiente */
+      var quien = (g.quien || "") + (g.pen ? "\u00a0(p)" : (g.pp ? "\u00a0(p.p.)" : ""));
+      var min = '<span class="min">'+esc(g.m || "")+'</span>';
+      var texto = esc(quien);
+      return '<span class="g '+lado+'">'
+           + (lado === "v" ? texto + min : min + texto)
+           + '</span>';
+    }).join("") + '</div>';
+  }
+  var rojas = (r.tarjetas || []).filter(function(t){ return t.tipo === "roja"; });
+  if(rojas.length){
+    out += '<div class="tarjetas">' + rojas.map(function(t){
+      return '<span><i class="carta roja"></i>'+esc(t.quien)+' '+esc(t.m)+'</span>';
+    }).join("") + '</div>';
+  }
+  /* El resumen redactado a mano acompaña a los goles; la nota automática de
+     la API (lista de goleadores, minuto) solo sale si no hay nada más. */
+  if(r.note && (r.nota_manual || !out)){
+    out += '<div class="note'+(r.nota_manual ? " resumen" : "")+'"><span>'+esc(r.note)+'</span></div>';
+  }
+  return out;
+}
+
+function resline(m, score){
+  return '<div class="resline">'
+    + '<div class="t">'+crest(m.h,30)+'<span>'+esc(T[m.h].s)+'</span></div>'
+    + '<div class="score">'+esc(score)+'</div>'
+    + '<div class="t r"><span>'+esc(T[m.a].s)+'</span>'+crest(m.a,30)+'</div>'
+    + '</div>';
+}
+
+function renderHero(m){
+  if(timer){ clearInterval(timer); timer = null; }
+  if(!m){ heroEl.innerHTML = ""; return; }
+  var home = T[m.h], away = T[m.a];
+  var d = m.t;
+  var dayTxt = WDL[d.getDay()] + " " + d.getDate() + " de " + MOL[d.getMonth()];
+  var today = new Date(), tom = new Date(today.getTime() + 86400000);
+  var same = function(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); };
+  var label = same(d,today) ? "Hoy" : (same(d,tom) ? "Mañana" : "Próximo partido");
+  if(label !== "Próximo partido") dayTxt = label + ", " + dayTxt.charAt(0).toLowerCase() + dayTxt.slice(1);
+  heroEl.innerHTML =
+    '<div class="hero"><div class="pitch"><i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i></div><div class="hero-in">'
+    + '<div class="eyebrow"><span class="dot"></span><span id="eyeTxt">'+esc(label === "Próximo partido" ? label : label + " juega el " + T[sel].s)+'</span></div>'
+    + '<div class="matchup">'
+    +   '<div class="side">' + crest(m.h,54) + '<b>'+esc(home.n)+'</b><em>Casa</em></div>'
+    +   '<div class="vs">—</div>'
+    +   '<div class="side">' + crest(m.a,54) + '<b>'+esc(away.n)+'</b><em>Fuera</em></div>'
+    + '</div>'
+    + '<div class="when"><span class="day">'+esc(dayTxt)+'</span><span class="hh">'+esc(m.time)+'</span>'
+    +   '<span class="count" id="count"></span></div>'
+    + chRow(m.ch)
+    + '<button class="linkbtn" id="copyBtn" type="button" style="margin-top:14px">Copiar para el grupo</button>'
+    + '</div></div>';
+  document.getElementById("copyBtn").addEventListener("click", function(){
+    var chs = m.ch.filter(function(c){ return c !== "tbd"; })
+                  .map(function(c){ return CH[c].free ? "DAZN (gratis)" : CH[c].n; });
+    var txt = T[m.h].n + " - " + T[m.a].n + "\n" + dayTxt + " a las " + m.time + "\n"
+            + (chs.length ? "Por " + chs.join(" / ") : "Canal aún sin confirmar");
+    var btn = this;
+    var done = function(){ btn.textContent = "Copiado"; setTimeout(function(){ btn.textContent = "Copiar para el grupo"; }, 1800); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done, function(){ btn.textContent = "No se pudo copiar"; });
+    } else {
+      var ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta);
+      ta.select(); try{ document.execCommand("copy"); done(); }catch(e){ btn.textContent = "No se pudo copiar"; }
+      document.body.removeChild(ta);
+    }
+  });
+  tick(m);
+  timer = setInterval(function(){ tick(m); }, 1000);
+}
+function tick(m){
+  var el = document.getElementById("count"); if(!el) return;
+  var diff = m.t.getTime() - Date.now();
+  if(diff <= 0){
+    var over = -diff;
+    if(over < 7200000){ el.textContent = "● En juego"; el.className = "count live"; return; }
+    el.textContent = ""; return;
+  }
+  var s = Math.floor(diff/1000), d = Math.floor(s/86400), h = Math.floor(s%86400/3600),
+      mi = Math.floor(s%3600/60), se = s%60;
+  el.className = "count";
+  el.textContent = d > 0 ? ("faltan " + d + "d " + h + "h") : (h + ":" + pad(mi) + ":" + pad(se));
+}
+function pad(n){ return n < 10 ? "0"+n : ""+n; }
+
+function renderList(full){
+  if(!full.length){ panel.innerHTML = '<div class="empty">No hay partidos programados ahora mismo.</div>'; return; }
+  var LIMIT = 6;
+  var list = showAll ? full : full.slice(0, LIMIT);
+  var html = "", curMonth = "";
+  list.forEach(function(m, i){
+    var d = m.t, key = d.getFullYear()+"-"+d.getMonth();
+    if(key !== curMonth){
+      curMonth = key;
+      html += '<div class="month">'+MOL[d.getMonth()]+" "+d.getFullYear()+'</div>';
+    }
+    var isHome = m.h === sel;
+    var opp = T[isHome ? m.a : m.h];
+    var r = result(m);
+    html += '<div class="fx'+(i===0?" hi":"")+'">'
+      + '<div class="dt"><span class="d">'+d.getDate()+'</span><span class="mo">'+MO[d.getMonth()]+'</span><span class="wd">'+WD[d.getDay()]+'</span></div>'
+      + '<div class="body">'
+      +   '<div class="top">'+crest(isHome ? m.a : m.h, 26)+'<span class="opp">'+esc(opp.n)+'</span></div>'
+      +   '<div class="meta">'
+      +     (r ? '<span class="scorepill">'+esc(r.hs+" - "+r.as)+'</span><span class="pill">Final</span>'
+                : '<span class="hh">'+esc(m.time)+'</span>')
+      +     '<span class="pill'+(isHome?"":" away")+'">'+(isHome?"En casa":"Fuera")+'</span>'
+      +     '<span class="pill comp">LaLiga</span></div>'
+      +   chRow(m.ch)
+      + '</div></div>';
+  });
+  if(!showAll && full.length > LIMIT){
+    html += '<button class="morebtn" id="moreBtn" type="button">Ver los '+(full.length-LIMIT)+' partidos restantes</button>';
+  }
+  panel.innerHTML = html;
+  var mb = document.getElementById("moreBtn");
+  if(mb) mb.addEventListener("click", function(){ showAll = true; renderList(full); });
+}
+
+/* Los próximos partidos agrupados por día. Devuelve HTML para poder usarlo
+   igual en la pestaña "Estos días" que en la portada, sin equipo elegido. */
+function proximosHTML(dias){
+  var now = Date.now();
+  var upcoming = M.map(decorate).filter(function(m){ return m.t.getTime() > now - 7200000; })
+                  .sort(function(a,b){ return a.t - b.t; });
+  if(!upcoming.length) return '<div class="empty">No quedan partidos en el calendario cargado.</div>';
+  var start = upcoming[0].t.getTime();
+  var round = upcoming.filter(function(m){ return m.t.getTime() - start < dias*86400000; });
+  var html = "", curDay = "";
+  round.forEach(function(m){
+    if(m.date !== curDay){
+      curDay = m.date;
+      html += '<div class="month">'+esc(etiquetaDia(m.t))+'</div>';
+    }
+    var mine = (sel && (m.h === sel || m.a === sel));
+    var rr = result(m);
+    html += '<div class="fx'+(mine?" hi":"")+'" style="grid-template-columns:52px 1fr">'
+      + '<div class="dt"><span class="d" style="font-size:15px">'+esc(rr ? rr.hs+"-"+rr.as : m.time)+'</span></div>'
+      + '<div class="body"><div class="top">'
+      +   crest(m.h,24)+'<span class="opp" style="font-size:14.5px">'+esc(T[m.h].n)+'</span>'
+      +   '<span class="vs" style="font-size:11px">\u2014</span>'
+      +   crest(m.a,24)+'<span class="opp" style="font-size:14.5px">'+esc(T[m.a].n)+'</span>'
+      + '</div>' + (rr ? "" : chRow(m.ch)) + '</div></div>';
+  });
+  return html;
+}
+
+/* Partidos ya terminados de los últimos días, con marcador y resumen. Se leen
+   de los resultados y no del calendario, porque el calendario solo guarda lo
+   que está por venir. */
+function resultadosRecientes(dias){
+  var out = [], corte = Date.now() - dias*86400000;
+  for(var k in RES){
+    if(!Object.prototype.hasOwnProperty.call(RES, k)) continue;
+    var r = RES[k], parte = k.split("|");
+    if(parte.length !== 3 || r.status !== "ft") continue;
+    if(!T[parte[1]] || !T[parte[2]]) continue;
+    var d = ts(parte[0], "21:00");
+    if(d.getTime() < corte) continue;
+    out.push({date:parte[0], t:d, h:parte[1], a:parte[2], r:r});
+  }
+  out.sort(function(a,b){ return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); });
+  return out;
+}
+function resultadosHTML(dias){
+  var lista = resultadosRecientes(dias);
+  if(!lista.length) return "";
+  var html = '<h2 class="sec">Resultados</h2>', curDay = "";
+  lista.forEach(function(x){
+    if(x.date !== curDay){
+      curDay = x.date;
+      html += '<div class="month">'+esc(etiquetaDia(x.t))+'</div>';
+    }
+    var comp = x.r.comp && x.r.comp !== "LaLiga"
+             ? '<div class="lbl">' + esc(x.r.comp) + '</div>' : "";
+    html += '<div class="rescard">' + comp + resline(x, x.r.hs + " - " + x.r.as) + detalleHTML(x.r) + '</div>';
+  });
+  return html;
+}
+
+function renderRound(){
+  panel.innerHTML = '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega estos días en LaLiga, con su canal. Tu equipo aparece resaltado.</span></div>'
+    + proximosHTML(5) + resultadosHTML(5);
+}
+
+/* Cualquier partido en juego ahora mismo, sea de quien sea. */
+function partidoEnJuego(){
+  var now = Date.now();
+  var todos = M.map(decorate).sort(function(a,b){ return b.t - a.t; });
+  for(var i=0;i<todos.length;i++){
+    var m = todos[i], gone = now - m.t.getTime(), r = result(m);
+    if(gone >= -60000 && gone < 9000000 && (!r || r.status !== "ft")) return m;
+  }
+  return null;
+}
+
+/* Portada: lo que se ve antes de elegir equipo. */
+function renderPortada(){
+  var box = document.getElementById("portadaStatus");
+  var jugando = partidoEnJuego();
+  if(jugando){
+    var pr = result(jugando);
+    var vivo = "Se está jugando ahora";
+    if(pr && pr.minute) vivo = "En juego \u00b7 minuto " + pr.minute;
+    else if(pr && pr.half) vivo = "Descanso";
+    box.innerHTML = '<div class="rescard playing"><div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
+      + resline(jugando, pr ? pr.hs + " - " + pr.as : "\u00b7 \u00b7")
+      + detalleHTML(pr)
+      + '<a class="livelink" href="'+esc(liveUrl(jugando))+'" target="_blank" rel="noopener">Ver el marcador en directo</a>'
+      + '</div>';
+  } else {
+    box.innerHTML = "";
+  }
+  document.getElementById("portadaPanel").innerHTML =
+      '<h2 class="sec">Próximos partidos</h2>'
+    + '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega estos días, con su canal. Elige tu equipo ahí arriba para ver solo los suyos.</span></div>'
+    + proximosHTML(5)
+    + resultadosHTML(5);
+}
+
+function rivalChip(id){
+  var r = R[id] || {n:id, c:"#888", t:"#fff"};
+  if(IMG[id]){
+    return '<li><img class="crest" src="'+IMG[id]+'" alt="" width="26" height="26" decoding="async">'
+      + esc(r.n) + '</li>';
+  }
+  var words = r.n.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ ]/g," ").split(/\s+/).filter(Boolean);
+  var ini = words.length > 1
+    ? words.map(function(w){ return w[0]; }).join("").slice(0,3).toUpperCase()
+    : words[0].slice(0,3).toUpperCase();
+  return '<li><span class="rivalbadge" style="background:'+r.c+';color:'+r.t+'">'+esc(ini)+'</span>'+esc(r.n)+'</li>';
+}
+
+function renderEurope(){
+  var html = "";
+  var ucl = EU.ucl[sel];
+  if(ucl){
+    html += '<div class="card">'
+      + '<h3>Champions League · fase liga</h3>'
+      + '<p class="sub">Ocho partidos entre el 8 de septiembre y el 27 de enero. Toda la Champions se ve en Movistar Plus+.</p>'
+      + '<div class="euro">'
+      +   '<div><h4>En casa</h4><ul>'+ucl.h.map(rivalChip).join("")+'</ul></div>'
+      +   '<div><h4>Fuera</h4><ul>'+ucl.a.map(rivalChip).join("")+'</ul></div>'
+      + '</div>'
+      + '<div class="chrow" style="margin-top:16px">'+chipHTML("mchamp")+chipHTML("mplus")+'</div>'
+      + '<div class="note" style="margin-top:12px"><span>UEFA publica el día y la hora exactos de cada partido pocos días después del sorteo. Los rivales ya son definitivos.</span></div>'
+      + '</div>';
+  } else if(EU.uel[sel]){
+    var uel = EU.uel[sel];
+    html += '<div class="card">'
+      + '<h3>Europa League \u00b7 fase liga</h3>'
+      + '<p class="sub">Ocho partidos entre el 16 de septiembre y el 28 de enero. Toda la Europa League se ve en Movistar Plus+.</p>'
+      + '<div class="euro">'
+      +   '<div><h4>En casa</h4><ul>'+uel.h.map(rivalChip).join("")+'</ul></div>'
+      +   '<div><h4>Fuera</h4><ul>'+uel.a.map(rivalChip).join("")+'</ul></div>'
+      + '</div>'
+      + '<div class="chrow" style="margin-top:16px">'+chipHTML("mchamp")+'</div>'
+      + '<div class="note" style="margin-top:12px"><span>Rivales del sorteo del 28 de agosto, ya definitivos. UEFA publica el d\u00eda y la hora de cada partido pocos d\u00edas antes.</span></div>'
+      + '</div>';
+  } else if(EU.conf[sel]){
+    var cf = EU.conf[sel];
+    html += '<div class="card">'
+      + '<h3>Conference League \u00b7 fase liga</h3>'
+      + '<p class="sub">'+esc(T[sel].n)+' elimin\u00f3 al Partizan en la previa y est\u00e1 en la fase liga. Seis partidos entre el 15 de octubre y el 17 de diciembre, en Movistar Plus+.</p>'
+      + '<div class="euro">'
+      +   '<div><h4>En casa</h4><ul>'+cf.h.map(rivalChip).join("")+'</ul></div>'
+      +   '<div><h4>Fuera</h4><ul>'+cf.a.map(rivalChip).join("")+'</ul></div>'
+      + '</div>'
+      + '<div class="chrow" style="margin-top:16px">'+chipHTML("mchamp")+chipHTML("mplus")+'</div>'
+      + '<div class="note" style="margin-top:12px"><span>Rivales del sorteo del 28 de agosto, ya definitivos. UEFA publica el d\u00eda y la hora de cada partido pocos d\u00edas antes.</span></div>'
+      + '</div>';
+  } else {
+    html += '<div class="empty">'+esc(T[sel].n)+' no juega competición europea esta temporada. Su próxima cita fuera de LaLiga es la Copa del Rey.</div>';
+  }
+  html += '<div class="card"><h3>Copa del Rey</h3>'
+    + '<p class="sub">Arranca a finales de octubre. La emisión se reparte entre RTVE en abierto, Movistar Plus+ y Orange TV; el partido concreto se anuncia jornada a jornada.</p></div>';
+  panel.innerHTML = html;
+}
+
+/* ---- guía de canales ---- */
+var GUIDE = [
+  ["mlaliga","LaLiga, la mitad de los partidos","Cinco partidos por jornada, más tres jornadas completas en exclusiva."],
+  ["dazn","LaLiga, la otra mitad","Los otros cinco partidos por jornada. Sin DAZN te pierdes la mitad de la liga."],
+  ["daznfree","Un partido gratis cada semana","DAZN abre un partido por jornada en su app, sin pagar, y RTVE lo emite también en Teledeporte."],
+  ["mchamp","Champions, Europa y Conference","Las tres competiciones europeas son exclusiva de Movistar Plus+."],
+  ["orange","Orange lleva la señal de los dos","Orange TV revende las señales de Movistar y DAZN: con Orange se ve todo, pero es la opción más cara."]
+];
+document.getElementById("guide").innerHTML = GUIDE.map(function(g){
+  var c = CH[g[0]];
+  return '<div class="grow"><span class="logo '+c.k+'" style="padding:0 9px;height:26px;display:inline-flex;'
+    + 'align-items:center;justify-content:center;border-radius:6px;font-family:Archivo,sans-serif;font-weight:800;font-size:11px">'
+    + esc(c.lg)+'</span><span class="txt"><b>'+esc(g[1])+'</b>'+esc(g[2])+'</span></div>';
+}).join("");
+
+/* ---- sello de fecha ---- */
+(function(){
+  var d = new Date();
+  document.getElementById("stamp").textContent =
+    "Temporada 2026/27 · actualizado " + d.getDate() + " " + MO[d.getMonth()] + " " + d.getFullYear();
+})();
+
+syncTabs();
+if(sel) pickerSec.setAttribute("hidden","");
+render();
+
+/* Aviso de marcadores congelados.
+
+   Por sentencia, los operadores españoles bloquean IP de Cloudflare durante
+   los partidos para cortar el fútbol pirata, y este portal cae con ellas. El
+   móvil sigue abriendo la copia guardada, así que los marcadores se quedan
+   quietos sin decir nada, que es justo lo peor que puede hacer un portal de
+   resultados. La marca _ts que escribe el actualizador permite distinguir
+   "no ha pasado nada" de "no me están llegando los datos". */
+var avisoRed = document.getElementById("avisoRed");
+function avisaDatosViejos(){
+  if(!avisoRed) return;
+  var marca = (RES && RES._ts) ? new Date(RES._ts) : null;
+  var ahora = new Date();
+  /* solo se avisa si deberia estar entrando algo: con un partido en marcha,
+     el actualizador refresca la marca cada minuto. Sin partido, que los datos
+     sean de hace horas es lo normal y callarse es lo correcto. */
+  var deberia = !!partidoEnJuego();
+  var minutos = marca ? (ahora - marca) / 60000 : 0;
+  if(!marca || !deberia || minutos < 8){
+    avisoRed.setAttribute("hidden", "");
+    return;
+  }
+  var hm = marca.toLocaleTimeString("es-ES", {hour:"2-digit", minute:"2-digit"});
+  avisoRed.innerHTML = '<span><b>Marcadores de las '+esc(hm)+'.</b> Ahora mismo no llegan datos '
+    + 'del servidor. Suele ser el bloqueo que los operadores aplican a las IP de Cloudflare '
+    + 'durante los partidos; cuando acaba la jornada vuelve solo.</span>';
+  avisoRed.removeAttribute("hidden");
+}
+
+/* Solo en la versión servida desde js-tech.es: refresco del marcador.
+   En la página publicada en Claude, window.__LIVE__ no existe y esto no corre. */
+if(window.__LIVE__){
+  /* De donde salen los marcadores.
+
+     El portal vive en dos sitios: el servidor de casa, que da los datos al
+     minuto, y una copia en GitHub Pages que sigue en pie cuando los
+     operadores bloquean las IP de Cloudflare durante los partidos. Desde la
+     copia se intenta primero el servidor de casa y, si no contesta, se usa el
+     archivo del propio repositorio, que se sube cada pocos minutos. Desde el
+     servidor de casa no se intenta nada raro: el archivo esta al lado. */
+  var FUENTES = [window.__LIVE__];
+  if(window.__LIVE_REMOTO__ && location.hostname.indexOf("js-tech.es") < 0){
+    FUENTES = [window.__LIVE_REMOTO__, window.__LIVE__];
+  }
+  var pide = function(i){
+    if(i >= FUENTES.length) return Promise.resolve(null);
+    return fetch(FUENTES[i] + "?t=" + Date.now(), {cache:"no-store"})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; })
+      .then(function(j){ return j || pide(i + 1); });
+  };
+  var lastSeen = JSON.stringify(RES);
+  var pull = function(){
+    pide(0)
+      .then(function(j){
+        if(!j) return;
+        var s = JSON.stringify(j);
+        if(s === lastSeen) return;      // nada nuevo: no repintamos
+        lastSeen = s; RES = j;
+        registraAjenos(RES);
+        render();
+        avisaDatosViejos();
+      })
+      .catch(function(){});             // sin red: se queda con lo último que tenía
+  };
+  refrescar = pull;                    // para poder pedirlo al elegir equipo
+  pull();
+  setInterval(pull, 30000);
+  avisaDatosViejos();
+  setInterval(avisaDatosViejos, 60000); // aunque el refresco se quede colgado
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden) pull();       // al volver al móvil, refresco inmediato
+  });
+  window.addEventListener("focus", pull);
+  document.getElementById("panel").addEventListener("click", function(e){
+    if(e.target.closest(".tab")) pull();
+  });
+}
+})();
+</script>
+
+<script>
+/* Sin conexión: la web abre igual y sigue mostrando calendario y canales.
+   La página y los resultados van siempre a la red primero, para que nunca se
+   quede pillada una versión vieja. */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+</script>
+
+</body>
+</html>
