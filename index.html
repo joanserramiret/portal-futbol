@@ -1333,31 +1333,29 @@ if(window.__LIVE__){
     return isNaN(d) ? 0 : d;
   }
 
-  /* Se preguntan las dos fuentes a la vez y gana la que traiga los datos mas
-     recientes: si el servidor de casa contesta, sus marcadores van al minuto;
-     si esta bloqueado, manda la copia del repositorio. */
-  var pide = function(){
-    return Promise.all(FUENTES.map(pideUna)).then(function(respuestas){
-      var mejor = null;
-      respuestas.forEach(function(j){
-        if(j && marcaDe(j) >= marcaDe(mejor)) mejor = j;
-      });
-      return mejor;
-    });
-  };
+  var marcaVista = 0;   /* la hora de los datos que se estan enseñando */
   var lastSeen = JSON.stringify(RES);
+
+  /* Se pregunta a las dos fuentes a la vez y se pinta la primera que conteste,
+     sin esperar a la otra: asi la copia enseña marcador al instante aunque el
+     servidor de casa este bloqueado y tarde en dar el error. Si despues llega
+     algo mas reciente, se repinta; si llega algo mas viejo, se ignora. */
+  function aplica(j){
+    if(!j) return;
+    if(marcaDe(j) < marcaVista) return;
+    marcaVista = marcaDe(j);
+    var s = JSON.stringify(j);
+    if(s === lastSeen) return;          // nada nuevo: no repintamos
+    lastSeen = s; RES = j;
+    registraAjenos(RES);
+    render();
+    avisaDatosViejos();
+  }
+
   var pull = function(){
-    pide()
-      .then(function(j){
-        if(!j) return;
-        var s = JSON.stringify(j);
-        if(s === lastSeen) return;      // nada nuevo: no repintamos
-        lastSeen = s; RES = j;
-        registraAjenos(RES);
-        render();
-        avisaDatosViejos();
-      })
-      .catch(function(){});             // sin red: se queda con lo último que tenía
+    FUENTES.forEach(function(f){
+      pideUna(f).then(aplica).catch(function(){});   // sin red: se queda con lo que tenia
+    });
   };
   refrescar = pull;                    // para poder pedirlo al elegir equipo
   pull();
