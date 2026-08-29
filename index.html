@@ -1307,20 +1307,47 @@ if(window.__LIVE__){
      copia se intenta primero el servidor de casa y, si no contesta, se usa el
      archivo del propio repositorio, que se sube cada pocos minutos. Desde el
      servidor de casa no se intenta nada raro: el archivo esta al lado. */
-  var FUENTES = [window.__LIVE__];
+  var FUENTES = [{url:window.__LIVE__, espera:8000}];
   if(window.__LIVE_REMOTO__ && location.hostname.indexOf("js-tech.es") < 0){
-    FUENTES = [window.__LIVE_REMOTO__, window.__LIVE__];
+    FUENTES = [{url:window.__LIVE_REMOTO__, espera:4000},
+               {url:window.__LIVE__,        espera:8000}];
   }
-  var pide = function(i){
-    if(i >= FUENTES.length) return Promise.resolve(null);
-    return fetch(FUENTES[i] + "?t=" + Date.now(), {cache:"no-store"})
+
+  /* Con limite de paciencia. Cuando el operador bloquea las IP de Cloudflare
+     no rechaza la conexion: se la traga, y el navegador se queda esperando un
+     minuto largo. Sin este corte, la copia se pasaba ese minuto ensenando el
+     marcador viejo del respaldo. */
+  function pideUna(f){
+    var ctrl = (typeof AbortController === "function") ? new AbortController() : null;
+    var reloj = ctrl ? setTimeout(function(){ ctrl.abort(); }, f.espera) : null;
+    var opciones = {cache:"no-store"};
+    if(ctrl) opciones.signal = ctrl.signal;
+    return fetch(f.url + "?t=" + Date.now(), opciones)
       .then(function(r){ return r.ok ? r.json() : null; })
       .catch(function(){ return null; })
-      .then(function(j){ return j || pide(i + 1); });
+      .then(function(j){ if(reloj) clearTimeout(reloj); return j; });
+  }
+
+  function marcaDe(j){
+    var d = (j && j._ts) ? Date.parse(j._ts) : 0;
+    return isNaN(d) ? 0 : d;
+  }
+
+  /* Se preguntan las dos fuentes a la vez y gana la que traiga los datos mas
+     recientes: si el servidor de casa contesta, sus marcadores van al minuto;
+     si esta bloqueado, manda la copia del repositorio. */
+  var pide = function(){
+    return Promise.all(FUENTES.map(pideUna)).then(function(respuestas){
+      var mejor = null;
+      respuestas.forEach(function(j){
+        if(j && marcaDe(j) >= marcaDe(mejor)) mejor = j;
+      });
+      return mejor;
+    });
   };
   var lastSeen = JSON.stringify(RES);
   var pull = function(){
-    pide(0)
+    pide()
       .then(function(j){
         if(!j) return;
         var s = JSON.stringify(j);
