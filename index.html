@@ -642,6 +642,104 @@ var R = {
   slovan:{n:"Slovan", c:"#003DA5", t:"#fff"}
 };
 
+/* ============ partidos de Champions, Europa League y Conference ============
+   Mismo formato que M, con un sexto campo: la competición. Fechas y horas del
+   sorteo de la UEFA, ya en horario peninsular. Toda la Europa va por Movistar. */
+var MEU = [
+["2026-09-08","21:00","dortmund","villarreal",["mchamp"],"Champions"],
+["2026-09-08","21:00","lille","betis",["mchamp"],"Champions"],
+["2026-09-08","21:00","realmadrid","inter",["mchamp"],"Champions"],
+["2026-09-09","18:45","barcelona","feyenoord",["mchamp"],"Champions"],
+["2026-09-09","21:00","liverpool","atletico",["mchamp"],"Champions"],
+
+["2026-09-16","18:45","omonia","celta",["mchamp"],"Europa League"],
+["2026-09-17","21:00","realsociedad","bournemouth",["mchamp"],"Europa League"],
+
+["2026-10-13","21:00","atletico","manutd",["mchamp"],"Champions"],
+["2026-10-13","21:00","galatasaray","barcelona",["mchamp"],"Champions"],
+["2026-10-13","21:00","villarreal","napoli",["mchamp"],"Champions"],
+["2026-10-14","21:00","roma","realmadrid",["mchamp"],"Champions"],
+["2026-10-14","21:00","betis","porto",["mchamp"],"Champions"],
+["2026-10-15","18:45","unionsg","realsociedad",["mchamp"],"Europa League"],
+["2026-10-15","18:45","craiova","getafe",["mchamp"],"Conference"],
+["2026-10-15","21:00","celta","juventus",["mchamp"],"Europa League"],
+
+["2026-10-20","21:00","liverpool","villarreal",["mchamp"],"Champions"],
+["2026-10-20","21:00","psg","barcelona",["mchamp"],"Champions"],
+["2026-10-20","21:00","stuttgart","atletico",["mchamp"],"Champions"],
+["2026-10-21","21:00","betis","feyenoord",["mchamp"],"Champions"],
+["2026-10-21","21:00","realmadrid","leipzig",["mchamp"],"Champions"],
+["2026-10-22","18:45","getafe","lugano",["mchamp"],"Conference"],
+["2026-10-22","21:00","celtic","celta",["mchamp"],"Europa League"],
+["2026-10-22","21:00","lillestrom","realsociedad",["mchamp"],"Europa League"],
+
+["2026-11-03","21:00","atletico","bayern",["mchamp"],"Champions"],
+["2026-11-03","21:00","barcelona","astonvilla",["mchamp"],"Champions"],
+["2026-11-03","21:00","villarreal","psg",["mchamp"],"Champions"],
+["2026-11-04","18:45","aek","realmadrid",["mchamp"],"Champions"],
+["2026-11-04","21:00","dortmund","betis",["mchamp"],"Champions"],
+["2026-11-05","18:45","realsociedad","lyon",["mchamp"],"Europa League"],
+["2026-11-05","21:00","celta","unionsg",["mchamp"],"Europa League"],
+["2026-11-05","21:00","getafe","brighton",["mchamp"],"Conference"],
+
+["2026-11-24","21:00","realmadrid","psv",["mchamp"],"Champions"],
+["2026-11-24","21:00","slovan","betis",["mchamp"],"Champions"],
+["2026-11-25","18:45","sabah","barcelona",["mchamp"],"Champions"],
+["2026-11-25","18:45","slavia","villarreal",["mchamp"],"Champions"],
+["2026-11-25","21:00","atletico","viking",["mchamp"],"Champions"],
+["2026-11-26","18:45","celta","bournemouth",["mchamp"],"Europa League"],
+["2026-11-26","18:45","iberia","getafe",["mchamp"],"Conference"],
+["2026-11-26","21:00","palace","realsociedad",["mchamp"],"Europa League"],
+
+["2026-12-08","18:45","villarreal","sabah",["mchamp"],"Champions"],
+["2026-12-08","21:00","barcelona","mancity",["mchamp"],"Champions"],
+["2026-12-09","18:45","betis","como",["mchamp"],"Champions"],
+["2026-12-09","21:00","arsenal","realmadrid",["mchamp"],"Champions"],
+["2026-12-09","21:00","psv","atletico",["mchamp"],"Champions"],
+["2026-12-10","18:45","marsella","celta",["mchamp"],"Europa League"],
+["2026-12-10","18:45","getafe","escaldes",["mchamp"],"Conference"],
+["2026-12-10","21:00","realsociedad","torreense",["mchamp"],"Europa League"],
+["2026-12-17","21:00","ajax","getafe",["mchamp"],"Conference"],
+
+["2027-01-19","18:45","bodo","atletico",["mchamp"],"Champions"],
+["2027-01-19","21:00","realmadrid","lask",["mchamp"],"Champions"],
+["2027-01-20","18:45","fenerbahce","villarreal",["mchamp"],"Champions"],
+["2027-01-20","21:00","betis","arsenal",["mchamp"],"Champions"],
+["2027-01-20","21:00","sporting","barcelona",["mchamp"],"Champions"],
+["2027-01-21","18:45","realsociedad","plzen",["mchamp"],"Europa League"],
+["2027-01-21","21:00","beersheva","celta",["mchamp"],"Europa League"],
+
+["2027-01-27","21:00","atletico","fenerbahce",["mchamp"],"Champions"],
+["2027-01-27","21:00","barcelona","como",["mchamp"],"Champions"],
+["2027-01-27","21:00","bayern","betis",["mchamp"],"Champions"],
+["2027-01-27","21:00","shakhtar","realmadrid",["mchamp"],"Champions"],
+["2027-01-27","21:00","villarreal","manutd",["mchamp"],"Champions"],
+["2027-01-28","21:00","celta","lillestrom",["mchamp"],"Europa League"],
+["2027-01-28","21:00","juventus","realsociedad",["mchamp"],"Europa League"]
+];
+
+/* Los rivales europeos no están en T (que es solo LaLiga). Se dan de alta aquí
+   con el nombre y el color que ya guarda R, para que escudo, ficha y marcador
+   los traten igual que a cualquier equipo de casa. */
+(function(){
+  function iniciales(n){
+    var w = n.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ ]/g," ").split(/\s+/).filter(Boolean);
+    return (w.length > 1 ? w.map(function(x){ return x[0]; }).join("") : w[0]).slice(0,3).toUpperCase();
+  }
+  MEU.forEach(function(m){
+    [m[2], m[3]].forEach(function(id){
+      if(T[id]) return;
+      var r = R[id];
+      if(!r){ T[id] = {n:id, s:id, m:id.slice(0,3).toUpperCase(), p:"solid",
+                       c1:"#E7EAF0", c2:"#FFFFFF", b:"#5B6577", ajeno:true}; return; }
+      T[id] = {n:r.n, s:r.n, m:iniciales(r.n), p:"solid",
+               c1:r.c, c2:"#FFFFFF", b:(r.t === "#fff" ? r.c : "#111111"), ajeno:true};
+    });
+  });
+})();
+
+M = M.concat(MEU);
+
 /* ================= escudos ================= */
 /* Escudos dibujados a mano en SVG: heráldica y colores reales de cada club,
    no los logotipos oficiales. Campo del escudo = 0..40 x 0..31; debajo va la cinta. */
@@ -883,7 +981,7 @@ function myMatches(){
     .sort(function(a,b){ return a.t - b.t; });
 }
 function decorate(m){
-  return {raw:m, t:ts(m[0],m[1]), date:m[0], time:m[1], h:m[2], a:m[3], ch:m[4]};
+  return {raw:m, t:ts(m[0],m[1]), date:m[0], time:m[1], h:m[2], a:m[3], ch:m[4], comp:m[5] || "LaLiga"};
 }
 
 function render(){
@@ -1069,7 +1167,7 @@ function renderList(full){
       +     (r ? '<span class="scorepill">'+esc(r.hs+" - "+r.as)+'</span><span class="pill">Final</span>'
                 : '<span class="hh">'+esc(m.time)+'</span>')
       +     '<span class="pill'+(isHome?"":" away")+'">'+(isHome?"En casa":"Fuera")+'</span>'
-      +     '<span class="pill comp">LaLiga</span></div>'
+      +     '<span class="pill comp">'+esc(m.comp)+'</span></div>'
       +   chRow(m.ch)
       + '</div></div>';
   });
@@ -1104,7 +1202,9 @@ function proximosHTML(dias){
       +   crest(m.h,24)+'<span class="opp" style="font-size:14.5px">'+esc(T[m.h].n)+'</span>'
       +   '<span class="vs" style="font-size:11px">\u2014</span>'
       +   crest(m.a,24)+'<span class="opp" style="font-size:14.5px">'+esc(T[m.a].n)+'</span>'
-      + '</div>' + (rr ? "" : chRow(m.ch)) + '</div></div>';
+      + '</div>'
+      + (m.comp !== "LaLiga" ? '<div class="meta"><span class="pill comp">'+esc(m.comp)+'</span></div>' : "")
+      + (rr ? "" : chRow(m.ch)) + '</div></div>';
   });
   return html;
 }
@@ -1143,7 +1243,7 @@ function resultadosHTML(dias){
 }
 
 function renderRound(){
-  panel.innerHTML = '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega estos días en LaLiga, con su canal. Tu equipo aparece resaltado.</span></div>'
+  panel.innerHTML = '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega estos días, de LaLiga y de Europa, con su canal. Tu equipo aparece resaltado.</span></div>'
     + proximosHTML(5) + resultadosHTML(5);
 }
 
@@ -1196,48 +1296,51 @@ function rivalChip(id){
 }
 
 function renderEurope(){
+  /* Los partidos europeos del equipo salen del propio calendario, con su fecha
+     y su hora; si el equipo no juega en Europa, se dice y se pasa a la Copa. */
+  var mios = M.map(decorate).filter(function(m){
+    return m.comp !== "LaLiga" && (m.h === sel || m.a === sel);
+  }).sort(function(a,b){ return a.t - b.t; });
+
+  var TEXTO = {
+    "Champions": "Ocho partidos de fase liga entre septiembre y enero. Toda la Champions se ve en Movistar Plus+.",
+    "Europa League": "Ocho partidos de fase liga entre septiembre y enero. Toda la Europa League se ve en Movistar Plus+.",
+    "Conference": "Seis partidos de fase liga entre octubre y diciembre, en Movistar Plus+."
+  };
+
   var html = "";
-  var ucl = EU.ucl[sel];
-  if(ucl){
-    html += '<div class="card">'
-      + '<h3>Champions League · fase liga</h3>'
-      + '<p class="sub">Ocho partidos entre el 8 de septiembre y el 27 de enero. Toda la Champions se ve en Movistar Plus+.</p>'
-      + '<div class="euro">'
-      +   '<div><h4>En casa</h4><ul>'+ucl.h.map(rivalChip).join("")+'</ul></div>'
-      +   '<div><h4>Fuera</h4><ul>'+ucl.a.map(rivalChip).join("")+'</ul></div>'
-      + '</div>'
-      + '<div class="chrow" style="margin-top:16px">'+chipHTML("mchamp")+chipHTML("mplus")+'</div>'
-      + '<div class="note" style="margin-top:12px"><span>UEFA publica el día y la hora exactos de cada partido pocos días después del sorteo. Los rivales ya son definitivos.</span></div>'
-      + '</div>';
-  } else if(EU.uel[sel]){
-    var uel = EU.uel[sel];
-    html += '<div class="card">'
-      + '<h3>Europa League \u00b7 fase liga</h3>'
-      + '<p class="sub">Ocho partidos entre el 16 de septiembre y el 28 de enero. Toda la Europa League se ve en Movistar Plus+.</p>'
-      + '<div class="euro">'
-      +   '<div><h4>En casa</h4><ul>'+uel.h.map(rivalChip).join("")+'</ul></div>'
-      +   '<div><h4>Fuera</h4><ul>'+uel.a.map(rivalChip).join("")+'</ul></div>'
-      + '</div>'
-      + '<div class="chrow" style="margin-top:16px">'+chipHTML("mchamp")+'</div>'
-      + '<div class="note" style="margin-top:12px"><span>Rivales del sorteo del 28 de agosto, ya definitivos. UEFA publica el d\u00eda y la hora de cada partido pocos d\u00edas antes.</span></div>'
-      + '</div>';
-  } else if(EU.conf[sel]){
-    var cf = EU.conf[sel];
-    html += '<div class="card">'
-      + '<h3>Conference League \u00b7 fase liga</h3>'
-      + '<p class="sub">'+esc(T[sel].n)+' elimin\u00f3 al Partizan en la previa y est\u00e1 en la fase liga. Seis partidos entre el 15 de octubre y el 17 de diciembre, en Movistar Plus+.</p>'
-      + '<div class="euro">'
-      +   '<div><h4>En casa</h4><ul>'+cf.h.map(rivalChip).join("")+'</ul></div>'
-      +   '<div><h4>Fuera</h4><ul>'+cf.a.map(rivalChip).join("")+'</ul></div>'
-      + '</div>'
-      + '<div class="chrow" style="margin-top:16px">'+chipHTML("mchamp")+chipHTML("mplus")+'</div>'
-      + '<div class="note" style="margin-top:12px"><span>Rivales del sorteo del 28 de agosto, ya definitivos. UEFA publica el d\u00eda y la hora de cada partido pocos d\u00edas antes.</span></div>'
-      + '</div>';
-  } else {
+  if(!mios.length){
     html += '<div class="empty">'+esc(T[sel].n)+' no juega competición europea esta temporada. Su próxima cita fuera de LaLiga es la Copa del Rey.</div>';
+  } else {
+    var comp = mios[0].comp;
+    html += '<div class="card"><h3>'+esc(comp)+' · fase liga</h3>'
+      + '<p class="sub">'+esc(TEXTO[comp] || "")+'</p>'
+      + '<div class="chrow" style="margin-top:14px">'+chipHTML("mchamp")+chipHTML("mplus")+'</div></div>';
+    var curMonth = "";
+    mios.forEach(function(m){
+      var d = m.t, key = d.getFullYear()+"-"+d.getMonth();
+      if(key !== curMonth){
+        curMonth = key;
+        html += '<div class="month">'+MOL[d.getMonth()]+" "+d.getFullYear()+'</div>';
+      }
+      var isHome = m.h === sel;
+      var opp = T[isHome ? m.a : m.h] || {n:"?"};
+      var r = result(m);
+      html += '<div class="fx">'
+        + '<div class="dt"><span class="d">'+d.getDate()+'</span><span class="mo">'+MO[d.getMonth()]+'</span><span class="wd">'+WD[d.getDay()]+'</span></div>'
+        + '<div class="body">'
+        +   '<div class="top">'+crest(isHome ? m.a : m.h, 26)+'<span class="opp">'+esc(opp.n)+'</span></div>'
+        +   '<div class="meta">'
+        +     (r ? '<span class="scorepill">'+esc(r.hs+" - "+r.as)+'</span><span class="pill">Final</span>'
+                 : '<span class="hh">'+esc(m.time)+'</span>')
+        +     '<span class="pill'+(isHome?"":" away")+'">'+(isHome?"En casa":"Fuera")+'</span></div>'
+        +   chRow(m.ch)
+        + '</div></div>';
+    });
   }
   html += '<div class="card"><h3>Copa del Rey</h3>'
-    + '<p class="sub">Arranca a finales de octubre. La emisión se reparte entre RTVE en abierto, Movistar Plus+ y Orange TV; el partido concreto se anuncia jornada a jornada.</p></div>';
+    + '<p class="sub">Arranca a finales de octubre. La emisión se reparte entre RTVE en abierto, Movistar Plus+ y Orange TV. '
+    + 'El sorteo de cada ronda fija el día, la hora y el canal; en cuanto se publiquen, los partidos aparecen aquí y en el resto del calendario.</p></div>';
   panel.innerHTML = html;
 }
 
