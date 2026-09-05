@@ -10,7 +10,7 @@
    asi se tira la cache vieja al entrar. Aunque no se suba, la pagina se pide
    siempre a la red, de modo que el peor caso es que sobren unos escudos.
 */
-var VERSION = "portal-2026-09-02a";
+var VERSION = "portal-2026-09-05a";
 var ESTATICOS = [
  "./",
  "index.html",
@@ -66,7 +66,16 @@ var ESTATICOS = [
  "escudos/stuttgart.webp",
  "escudos/valencia.webp",
  "escudos/viking.webp",
- "escudos/villarreal.webp"
+ "escudos/villarreal.webp",
+ "canales/mlaliga.webp",
+ "canales/mplus.webp",
+ "canales/mchamp.webp",
+ "canales/dazn.webp",
+ "canales/dazn2.webp",
+ "canales/orange.webp",
+ "canales/copa.webp",
+ "canales/la1.webp",
+ "canales/tdp.webp"
 ];
 
 self.addEventListener("install", function(e){
