@@ -210,7 +210,7 @@ h2.sec{
   overflow-y:auto; -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
 }
-.ficha .barra{
+.ficha .cabecera{
   position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:12px;
   padding:11px 14px; background:var(--bg); border-bottom:1px solid var(--line);
 }
@@ -1539,7 +1539,7 @@ function pintaFicha(){
   else if(r) estado = '<span class="vivo">En juego</span>';
   else estado = etiquetaDia(m.t) + (m.time ? " · " + esc(m.time) : "");
 
-  var html = '<div class="barra">'
+  var html = '<div class="cabecera">'
     + '<button class="volver" type="button" id="fichaVolver">‹ Volver</button>'
     + '<span class="dequien">'+esc(m.comp || "LaLiga")+'</span>'
     + '</div><div class="cuerpo">';
@@ -1561,7 +1561,7 @@ function pintaFicha(){
   if(d && d.narracion && d.narracion.length){
     html += '<div class="fseccion">Jugada a jugada</div><ul class="narra">'
       + d.narracion.map(function(n){
-          var gol = /gol{2,}|¡Gol/i.test(n.t);
+          var gol = /¡go+l/i.test(n.t);
           return '<li'+(gol ? ' class="gol"' : '')+'>'
             + '<span class="min">'+esc(n.m || "")+'</span>'
             + '<span class="txt">'+esc(n.t)+'</span></li>';
