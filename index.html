@@ -1236,7 +1236,14 @@ function tick(m){
 function pad(n){ return n < 10 ? "0"+n : ""+n; }
 
 function renderList(full){
-  if(!full.length){ panel.innerHTML = '<div class="empty">No hay partidos programados ahora mismo.</div>'; return; }
+  /* Lo que ya se ha jugado esta jornada, con marcador, encima de los partidos
+     que quedan: al terminar el de tu equipo lo siguiente que se mira es como
+     ha ido el resto. Cada tarjeta abre su ficha con las estadisticas. */
+  var jugados = resultadosHTML(4, "Ya jugados esta jornada");
+  if(!full.length){
+    panel.innerHTML = jugados + '<div class="empty">No hay partidos programados ahora mismo.</div>';
+    return;
+  }
   var LIMIT = 6;
   var list = showAll ? full : full.slice(0, LIMIT);
   var html = "", curMonth = "";
@@ -1264,7 +1271,7 @@ function renderList(full){
   if(!showAll && full.length > LIMIT){
     html += '<button class="morebtn" id="moreBtn" type="button">Ver los '+(full.length-LIMIT)+' partidos restantes</button>';
   }
-  panel.innerHTML = html;
+  panel.innerHTML = jugados + (jugados ? '<h2 class="sec">Sus próximos partidos</h2>' : "") + html;
   var mb = document.getElementById("moreBtn");
   if(mb) mb.addEventListener("click", function(){ showAll = true; renderList(full); });
 }
@@ -1316,10 +1323,10 @@ function resultadosRecientes(dias){
   out.sort(function(a,b){ return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); });
   return out;
 }
-function resultadosHTML(dias){
+function resultadosHTML(dias, titulo){
   var lista = resultadosRecientes(dias);
   if(!lista.length) return "";
-  var html = '<h2 class="sec">Resultados</h2>', curDay = "";
+  var html = '<h2 class="sec">'+esc(titulo || "Resultados")+'</h2>', curDay = "";
   lista.forEach(function(x){
     if(x.date !== curDay){
       curDay = x.date;
