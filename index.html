@@ -203,6 +203,64 @@ h2.sec{
   font-family:Archivo,sans-serif; font-weight:700; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
 }
 
+
+/* ---------- ficha del partido ---------- */
+.ficha{
+  position:fixed; inset:0; z-index:60; background:var(--bg);
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+.ficha .barra{
+  position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:12px;
+  padding:11px 14px; background:var(--bg); border-bottom:1px solid var(--line);
+}
+.ficha .volver{
+  display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line);
+  background:var(--surface); color:var(--ink); border-radius:10px;
+  padding:7px 13px 7px 10px; font:inherit; font-weight:600; font-size:14px; cursor:pointer;
+}
+.ficha .volver:hover{border-color:var(--line2)}
+.ficha .dequien{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink3)}
+.ficha .cuerpo{max-width:660px; margin:0 auto; padding:16px 14px 60px}
+.fmarcador{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:18px 14px; box-shadow:var(--shadow); margin-bottom:14px;
+}
+.fequipos{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px}
+.fequipos .lado{display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center}
+.fequipos .lado b{font-family:Archivo,sans-serif; font-weight:700; font-size:14.5px; line-height:1.2}
+.fgoles{font-family:Archivo,sans-serif; font-weight:800; font-size:34px; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums; white-space:nowrap}
+.festado{text-align:center; margin-top:12px; font-size:13px; color:var(--ink2)}
+.festado .vivo{color:var(--live); font-weight:700}
+.fseccion{font-family:Archivo,sans-serif; font-weight:700; font-size:12px; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--ink3); margin:20px 0 10px}
+.stat{margin-bottom:12px}
+.stat .cifras{display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:10px;
+  font-size:13px; margin-bottom:5px}
+.stat .cifras b{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px;
+  font-variant-numeric:tabular-nums}
+.stat .cifras span{text-align:center; color:var(--ink2)}
+.stat .barra{display:flex; height:7px; border-radius:4px; overflow:hidden; background:var(--sunk)}
+.stat .barra i{display:block; height:100%}
+.stat .barra .l{background:var(--accent)}
+.stat .barra .v{background:var(--line2)}
+.narra{list-style:none; margin:0; padding:0}
+.narra li{
+  display:grid; grid-template-columns:52px 1fr; gap:10px; padding:10px 0;
+  border-top:1px solid var(--line); font-size:14px; line-height:1.45;
+}
+.narra li:first-child{border-top:0}
+.narra .min{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:12.5px;
+  color:var(--ink3); padding-top:2px}
+.narra li.gol{background:var(--accent-soft); border-radius:10px; padding:10px 10px;
+  border-top-color:transparent; margin:4px 0}
+.narra li.gol .txt{font-weight:700}
+.fx[data-p]{cursor:pointer}
+.fx[data-p]:hover{border-color:var(--line2)}
+.rescard[data-p]{cursor:pointer}
+
 /* ---------- tabs ---------- */
 .tabs{display:flex; gap:4px; background:var(--sunk); padding:4px; border-radius:11px; margin-bottom:16px}
 .tab{
@@ -447,6 +505,8 @@ footer a{color:var(--ink2)}
 
     <div id="panel" role="tabpanel"></div>
   </div>
+
+  <div class="ficha" id="ficha" hidden></div>
 
   <section style="margin-top:30px">
     <h2 class="sec" style="margin-bottom:12px">Quién emite qué esta temporada</h2>
@@ -1048,7 +1108,8 @@ function renderStatus(){
     var vivo = "Se está jugando ahora";
     if(pr && pr.minute) vivo = "En juego · minuto " + pr.minute;
     else if(pr && pr.half) vivo = "Descanso";
-    box.innerHTML = '<div class="rescard playing"><div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
+    box.innerHTML = '<div class="rescard playing" data-p="'+esc(playing.date+"|"+playing.h+"|"+playing.a)+'">'
+      + '<div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
       + resline(playing, pr ? pr.hs + " - " + pr.as : "· ·")
       + detalleHTML(pr)
       + '<a class="livelink" href="'+esc(liveUrl(playing))+'" target="_blank" rel="noopener">Ver el marcador en directo</a>'
@@ -1177,7 +1238,7 @@ function renderList(full){
     var isHome = m.h === sel;
     var opp = T[isHome ? m.a : m.h];
     var r = result(m);
-    html += '<div class="fx'+(i===0?" hi":"")+'">'
+    html += '<div class="fx'+(i===0?" hi":"")+'" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'">'
       + '<div class="dt"><span class="d">'+d.getDate()+'</span><span class="mo">'+MO[d.getMonth()]+'</span><span class="wd">'+WD[d.getDay()]+'</span></div>'
       + '<div class="body">'
       +   '<div class="top">'+crest(isHome ? m.a : m.h, 26)+'<span class="opp">'+esc(opp.n)+'</span></div>'
@@ -1214,7 +1275,7 @@ function proximosHTML(dias){
     }
     var mine = (sel && (m.h === sel || m.a === sel));
     var rr = result(m);
-    html += '<div class="fx'+(mine?" hi":"")+'" style="grid-template-columns:52px 1fr">'
+    html += '<div class="fx'+(mine?" hi":"")+'" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'" style="grid-template-columns:52px 1fr">'
       + '<div class="dt"><span class="d" style="font-size:15px">'+esc(rr ? rr.hs+"-"+rr.as : m.time)+'</span></div>'
       + '<div class="body"><div class="top">'
       +   crest(m.h,24)+'<span class="opp" style="font-size:14.5px">'+esc(T[m.h].n)+'</span>'
@@ -1255,7 +1316,8 @@ function resultadosHTML(dias){
     }
     var comp = x.r.comp && x.r.comp !== "LaLiga"
              ? '<div class="lbl">' + esc(x.r.comp) + '</div>' : "";
-    html += '<div class="rescard">' + comp + resline(x, x.r.hs + " - " + x.r.as) + detalleHTML(x.r) + '</div>';
+    html += '<div class="rescard" data-p="'+esc(x.date+"|"+x.h+"|"+x.a)+'">'
+           + comp + resline(x, x.r.hs + " - " + x.r.as) + detalleHTML(x.r) + '</div>';
   });
   return html;
 }
@@ -1285,7 +1347,8 @@ function renderPortada(){
     var vivo = "Se está jugando ahora";
     if(pr && pr.minute) vivo = "En juego \u00b7 minuto " + pr.minute;
     else if(pr && pr.half) vivo = "Descanso";
-    box.innerHTML = '<div class="rescard playing"><div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
+    box.innerHTML = '<div class="rescard playing" data-p="'+esc(jugando.date+"|"+jugando.h+"|"+jugando.a)+'">'
+      + '<div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
       + resline(jugando, pr ? pr.hs + " - " + pr.as : "\u00b7 \u00b7")
       + detalleHTML(pr)
       + '<a class="livelink" href="'+esc(liveUrl(jugando))+'" target="_blank" rel="noopener">Ver el marcador en directo</a>'
@@ -1344,7 +1407,7 @@ function renderEurope(){
       var isHome = m.h === sel;
       var opp = T[isHome ? m.a : m.h] || {n:"?"};
       var r = result(m);
-      html += '<div class="fx">'
+      html += '<div class="fx" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'">'
         + '<div class="dt"><span class="d">'+d.getDate()+'</span><span class="mo">'+MO[d.getMonth()]+'</span><span class="wd">'+WD[d.getDay()]+'</span></div>'
         + '<div class="body">'
         +   '<div class="top">'+crest(isHome ? m.a : m.h, 26)+'<span class="opp">'+esc(opp.n)+'</span></div>'
@@ -1361,6 +1424,172 @@ function renderEurope(){
     + 'El sorteo de cada ronda fija el día, la hora y el canal; en cuanto se publiquen, los partidos aparecen aquí y en el resto del calendario.</p></div>';
   panel.innerHTML = html;
 }
+
+
+/* ================= ficha del partido =================
+   Al tocar un partido se abre a pantalla completa con el marcador, las
+   estadisticas y la narracion jugada a jugada. Cada partido tiene su propio
+   archivo en datos/directo/: asi la portada no carga con quince mil palabras
+   de cronica que casi nadie va a leer. */
+
+function clavePartido(m){ return m.date + "|" + m.h + "|" + m.a; }
+
+function basesDirecto(){
+  var bases = [];
+  var local = window.__LIVE__ || "datos/resultados.json";
+  if(window.__LIVE_REMOTO__ && location.hostname.indexOf("js-tech.es") < 0){
+    bases.push(window.__LIVE_REMOTO__.replace(/resultados\.json$/, "directo/"));
+  }
+  bases.push(local.replace(/resultados\.json$/, "directo/"));
+  return bases;
+}
+
+/* El partido que hay detrás de una clave: del calendario si está, y si no
+   (un amistoso, un rival que no jugamos) se arma con lo justo para pintarlo. */
+function partidoPorClave(clave){
+  var partes = clave.split("|");
+  if(partes.length !== 3) return null;
+  for(var i = 0; i < M.length; i++){
+    var d = decorate(M[i]);
+    if(d.date === partes[0] && d.h === partes[1] && d.a === partes[2]) return d;
+  }
+  if(!T[partes[1]] || !T[partes[2]]) return null;
+  return {raw:null, t:ts(partes[0], "21:00"), date:partes[0], time:"",
+          h:partes[1], a:partes[2], ch:[], comp:(RES[clave] || {}).comp || "LaLiga"};
+}
+
+var fichaEl = document.getElementById("ficha");
+var fichaClave = null, fichaDatos = null, fichaTimer = null, fichaCerrando = false;
+
+function abreFicha(clave){
+  var m = partidoPorClave(clave);
+  if(!m || !fichaEl) return;
+  fichaClave = clave; fichaDatos = null;
+  document.body.style.overflow = "hidden";
+  fichaEl.removeAttribute("hidden");
+  fichaEl.scrollTop = 0;
+  pintaFicha();
+  cargaDirecto();
+  if(fichaTimer) clearInterval(fichaTimer);
+  fichaTimer = setInterval(cargaDirecto, 20000);
+  try{ history.pushState({ficha:clave}, ""); }catch(e){}
+}
+
+function cierraFicha(volviendo){
+  if(!fichaClave) return;
+  fichaClave = null; fichaDatos = null;
+  if(fichaTimer){ clearInterval(fichaTimer); fichaTimer = null; }
+  if(fichaEl) fichaEl.setAttribute("hidden", "");
+  document.body.style.overflow = "";
+  if(volviendo && !fichaCerrando){
+    fichaCerrando = true;
+    try{ history.back(); }catch(e){}
+    setTimeout(function(){ fichaCerrando = false; }, 400);
+  }
+}
+
+window.addEventListener("popstate", function(){ if(fichaClave) cierraFicha(false); });
+
+/* Pide la ficha a las dos fuentes a la vez, igual que el marcador: la copia de
+   GitHub contesta aunque el operador tenga bloqueado el servidor de casa. */
+function cargaDirecto(){
+  if(!fichaClave) return;
+  var pedido = fichaClave;
+  var archivo = pedido.replace(/\|/g, "_") + ".json";
+  basesDirecto().forEach(function(base){
+    fetch(base + archivo + "?t=" + Date.now(), {cache:"no-store"})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; })
+      .then(function(j){
+        if(!j || pedido !== fichaClave) return;
+        var nueva = Date.parse(j.ts || "") || 0;
+        var vieja = fichaDatos ? (Date.parse(fichaDatos.ts || "") || 0) : -1;
+        if(nueva < vieja) return;
+        fichaDatos = j;
+        pintaFicha();
+      });
+  });
+}
+
+function barraStat(s){
+  var l = parseFloat(String(s.l).replace(",", ".")) || 0;
+  var v = parseFloat(String(s.v).replace(",", ".")) || 0;
+  var total = l + v;
+  var pl = total > 0 ? Math.round(l * 100 / total) : 50;
+  return '<div class="stat">'
+    + '<div class="cifras"><b>'+esc(s.l + (s.u || ""))+'</b>'
+    +   '<span>'+esc(s.k)+'</span>'
+    +   '<b>'+esc(s.v + (s.u || ""))+'</b></div>'
+    + '<div class="barra"><i class="l" style="width:'+pl+'%"></i>'
+    +   '<i class="v" style="width:'+(100 - pl)+'%"></i></div>'
+    + '</div>';
+}
+
+function pintaFicha(){
+  if(!fichaClave || !fichaEl) return;
+  var m = partidoPorClave(fichaClave);
+  if(!m) return;
+  var r = result(m);
+  var jugando = r && r.status !== "ft";
+
+  var estado;
+  if(r && r.status === "ft") estado = "Final";
+  else if(r && r.half) estado = '<span class="vivo">Descanso</span>';
+  else if(r && r.minute) estado = '<span class="vivo">En juego · minuto '+esc(r.minute)+'</span>';
+  else if(r) estado = '<span class="vivo">En juego</span>';
+  else estado = etiquetaDia(m.t) + (m.time ? " · " + esc(m.time) : "");
+
+  var html = '<div class="barra">'
+    + '<button class="volver" type="button" id="fichaVolver">‹ Volver</button>'
+    + '<span class="dequien">'+esc(m.comp || "LaLiga")+'</span>'
+    + '</div><div class="cuerpo">';
+
+  html += '<div class="fmarcador"><div class="fequipos">'
+    + '<div class="lado">'+crest(m.h,44)+'<b>'+esc(T[m.h].n)+'</b></div>'
+    + '<div class="fgoles">'+(r ? esc(r.hs + " - " + r.as) : esc(m.time || "· ·"))+'</div>'
+    + '<div class="lado">'+crest(m.a,44)+'<b>'+esc(T[m.a].n)+'</b></div>'
+    + '</div><div class="festado">'+estado+'</div>';
+  if(!r || jugando){
+    html += chRow(m.ch);
+  }
+  html += detalleHTML(r) + '</div>';
+
+  var d = fichaDatos;
+  if(d && d.stats && d.stats.length){
+    html += '<div class="fseccion">Estadísticas</div>' + d.stats.map(barraStat).join("");
+  }
+  if(d && d.narracion && d.narracion.length){
+    html += '<div class="fseccion">Jugada a jugada</div><ul class="narra">'
+      + d.narracion.map(function(n){
+          var gol = /gol{2,}|¡Gol/i.test(n.t);
+          return '<li'+(gol ? ' class="gol"' : '')+'>'
+            + '<span class="min">'+esc(n.m || "")+'</span>'
+            + '<span class="txt">'+esc(n.t)+'</span></li>';
+        }).join("")
+      + '</ul>';
+  }
+  if(!d){
+    html += '<div class="note" style="margin-top:18px"><span>'
+      + (m.t.getTime() > Date.now()
+          ? 'Todavía no se ha jugado. Las estadísticas y la narración aparecen aquí en cuanto empiece.'
+          : 'De este partido no hay estadísticas guardadas.')
+      + '</span></div>';
+  }
+  html += '</div>';
+  fichaEl.innerHTML = html;
+  var volver = document.getElementById("fichaVolver");
+  if(volver) volver.addEventListener("click", function(){ cierraFicha(true); });
+}
+
+/* Un solo oyente para toda la página: cada fila de partido lleva su clave en
+   data-p y desde aquí se abre la ficha. */
+document.addEventListener("click", function(e){
+  if(!e.target || !e.target.closest) return;
+  if(e.target.closest("#ficha") || e.target.closest("a") || e.target.closest("button")) return;
+  var fila = e.target.closest("[data-p]");
+  if(!fila) return;
+  abreFicha(fila.getAttribute("data-p"));
+});
 
 /* ---- guía de canales ---- */
 var GUIDE = [
