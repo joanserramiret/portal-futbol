@@ -207,22 +207,31 @@ h2.sec{
 /* ---------- ficha del partido ---------- */
 .ficha{
   position:fixed; inset:0; z-index:60; background:var(--bg);
-  overflow-y:auto; -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
+  display:flex; flex-direction:column;
 }
+/* con display:flex hay que repetir lo de esconderla: si no, el atributo
+   hidden del HTML se queda corto y la ficha no se cerraria nunca */
+.ficha[hidden]{display:none}
 .ficha .cabecera{
-  position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:12px;
+  flex:0 0 auto; display:flex; align-items:center; gap:12px;
   padding:11px 14px; background:var(--bg); border-bottom:1px solid var(--line);
+  padding-top:calc(11px + env(safe-area-inset-top));
 }
 .ficha .volver{
   display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line);
   background:var(--surface); color:var(--ink); border-radius:10px;
-  padding:7px 13px 7px 10px; font:inherit; font-weight:600; font-size:14px; cursor:pointer;
+  padding:9px 15px 9px 12px; min-height:44px; font:inherit; font-weight:600; font-size:15px;
+  cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
 }
+.ficha .volver:active{background:var(--sunk)}
 .ficha .volver:hover{border-color:var(--line2)}
 .ficha .dequien{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em;
   text-transform:uppercase; color:var(--ink3)}
-.ficha .cuerpo{max-width:660px; margin:0 auto; padding:16px 14px 60px}
+.ficha .cuerpo{
+  flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain;
+  width:100%; max-width:660px; margin:0 auto; padding:16px 14px;
+  padding-bottom:calc(60px + env(safe-area-inset-bottom));
+}
 .fmarcador{
   background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
   padding:18px 14px; box-shadow:var(--shadow); margin-bottom:14px;
@@ -1461,14 +1470,18 @@ function partidoPorClave(clave){
 
 var fichaEl = document.getElementById("ficha");
 var fichaClave = null, fichaDatos = null, fichaTimer = null, fichaCerrando = false;
+var fichaPintado = "";
 
 function abreFicha(clave){
   var m = partidoPorClave(clave);
   if(!m || !fichaEl) return;
-  fichaClave = clave; fichaDatos = null;
+  fichaClave = clave; fichaDatos = null; fichaPintado = "";
   document.body.style.overflow = "hidden";
+  fichaEl.innerHTML = '<div class="cabecera">'
+    + '<button class="volver" type="button" id="fichaVolver">\u2039 Volver</button>'
+    + '<span class="dequien" id="fichaComp"></span>'
+    + '</div><div class="cuerpo" id="fichaCuerpo"></div>';
   fichaEl.removeAttribute("hidden");
-  fichaEl.scrollTop = 0;
   pintaFicha();
   cargaDirecto();
   if(fichaTimer) clearInterval(fichaTimer);
@@ -1478,7 +1491,7 @@ function abreFicha(clave){
 
 function cierraFicha(volviendo){
   if(!fichaClave) return;
-  fichaClave = null; fichaDatos = null;
+  fichaClave = null; fichaDatos = null; fichaPintado = "";
   if(fichaTimer){ clearInterval(fichaTimer); fichaTimer = null; }
   if(fichaEl) fichaEl.setAttribute("hidden", "");
   document.body.style.overflow = "";
@@ -1540,12 +1553,10 @@ function pintaFicha(){
   else if(r) estado = '<span class="vivo">En juego</span>';
   else estado = etiquetaDia(m.t) + (m.time ? " · " + esc(m.time) : "");
 
-  var html = '<div class="cabecera">'
-    + '<button class="volver" type="button" id="fichaVolver">‹ Volver</button>'
-    + '<span class="dequien">'+esc(m.comp || "LaLiga")+'</span>'
-    + '</div><div class="cuerpo">';
+  var etiqueta = document.getElementById("fichaComp");
+  if(etiqueta) etiqueta.textContent = m.comp || "LaLiga";
 
-  html += '<div class="fmarcador"><div class="fequipos">'
+  var html = '<div class="fmarcador"><div class="fequipos">'
     + '<div class="lado">'+crest(m.h,44)+'<b>'+esc(T[m.h].n)+'</b></div>'
     + '<div class="fgoles">'+(r ? esc(r.hs + " - " + r.as) : esc(m.time || "· ·"))+'</div>'
     + '<div class="lado">'+crest(m.a,44)+'<b>'+esc(T[m.a].n)+'</b></div>'
@@ -1576,16 +1587,24 @@ function pintaFicha(){
           : 'De este partido no hay estadísticas guardadas.')
       + '</span></div>';
   }
-  html += '</div>';
-  fichaEl.innerHTML = html;
-  var volver = document.getElementById("fichaVolver");
-  if(volver) volver.addEventListener("click", function(){ cierraFicha(true); });
+  /* Solo se repinta el cuerpo, y solo si algo ha cambiado, guardando por donde
+     iba la lectura: asi el refresco no te devuelve al principio de la cronica
+     ni te quita el boton de debajo del dedo. */
+  var cuerpo = document.getElementById("fichaCuerpo");
+  if(!cuerpo || html === fichaPintado) return;
+  fichaPintado = html;
+  var altura = cuerpo.scrollTop;
+  cuerpo.innerHTML = html;
+  if(altura) cuerpo.scrollTop = altura;
 }
 
 /* Un solo oyente para toda la página: cada fila de partido lleva su clave en
    data-p y desde aquí se abre la ficha. */
 document.addEventListener("click", function(e){
   if(!e.target || !e.target.closest) return;
+  /* el de volver, primero: asi sigue funcionando aunque la ficha se acabe de
+     repintar y el boton de antes ya no exista */
+  if(e.target.closest("#fichaVolver")){ cierraFicha(true); return; }
   if(e.target.closest("#ficha") || e.target.closest("a") || e.target.closest("button")) return;
   var fila = e.target.closest("[data-p]");
   if(!fila) return;
