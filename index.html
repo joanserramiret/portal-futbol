@@ -1128,7 +1128,8 @@ function renderStatus(){
   }
   if(last){
     var lr = result(last);
-    box.innerHTML = '<div class="rescard"><div class="lbl">Último resultado</div>'
+    box.innerHTML = '<div class="rescard" data-p="'+esc(last.date+"|"+last.h+"|"+last.a)+'">'
+      + '<div class="lbl">Último resultado</div>'
       + resline(last, lr.hs + " - " + lr.as)
       + detalleHTML(lr)
       + '</div>';

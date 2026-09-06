@@ -10,7 +10,7 @@
    asi se tira la cache vieja al entrar. Aunque no se suba, la pagina se pide
    siempre a la red, de modo que el peor caso es que sobren unos escudos.
 */
-var VERSION = "portal-2026-09-06a";
+var VERSION = "portal-2026-09-07a";
 var ESTATICOS = [
  "./",
  "index.html",
