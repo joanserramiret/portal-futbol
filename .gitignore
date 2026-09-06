@@ -16,3 +16,5 @@
 !icono/**
 !datos/
 !datos/resultados.json
+!datos/directo/
+!datos/directo/**
