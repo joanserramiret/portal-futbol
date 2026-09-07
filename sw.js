@@ -10,7 +10,7 @@
    asi se tira la cache vieja al entrar. Aunque no se suba, la pagina se pide
    siempre a la red, de modo que el peor caso es que sobren unos escudos.
 */
-var VERSION = "portal-2026-09-07a";
+var VERSION = "portal-2026-09-07b";
 var ESTATICOS = [
  "./",
  "index.html",
@@ -133,6 +133,41 @@ function aLaCachePrimero(req){
     });
   });
 }
+
+/* ---------- avisos al movil ----------
+   El buzon del telefono (Apple o Google) despierta a este archivo aunque la
+   web este cerrada y le pasa el texto que ha mandado el ordenador de casa. */
+self.addEventListener("push", function(e){
+  var d = {titulo: "Portal de futbol", cuerpo: ""};
+  try { if (e.data) d = e.data.json(); } catch (err) { try { d.cuerpo = e.data.text(); } catch (err2) {} }
+  e.waitUntil(self.registration.showNotification(d.titulo || "Portal de futbol", {
+    body: d.cuerpo || "",
+    icon: "icono/icono-192.png",
+    badge: "icono/icono-192.png",
+    lang: "es",
+    /* mismo tag por partido y tipo: un gol no se apila con el anterior, pero
+       tampoco salen dos veces si el buzon repite el envio */
+    tag: (d.partido || "portal") + "|" + (d.tipo || ""),
+    renotify: true,
+    data: {partido: d.partido || ""}
+  }));
+});
+
+/* Al tocar el aviso: si la web ya esta abierta se trae al frente, y si no se
+   abre. En los dos casos se le dice que partido era, para poder ir a el. */
+self.addEventListener("notificationclick", function(e){
+  e.notification.close();
+  var partido = (e.notification.data || {}).partido || "";
+  e.waitUntil(clients.matchAll({type: "window", includeUncontrolled: true}).then(function(lista){
+    for (var i = 0; i < lista.length; i++){
+      if (lista[i].url.indexOf(self.registration.scope) === 0){
+        lista[i].postMessage({abrirPartido: partido});
+        return lista[i].focus();
+      }
+    }
+    return clients.openWindow(self.registration.scope + (partido ? "#p=" + encodeURIComponent(partido) : ""));
+  }));
+});
 
 self.addEventListener("fetch", function(e){
   var req = e.request;
