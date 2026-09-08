@@ -513,6 +513,7 @@ footer a{color:var(--ink2)}
   <div class="chosen" id="chosen">
     <span id="chosenCrest"></span>
     <span class="who"><b id="chosenName"></b><span id="chosenSub"></span></span>
+    <button class="linkbtn" id="todosBtn" type="button">Todos</button>
     <button class="linkbtn" id="changeBtn" type="button" aria-expanded="false" aria-controls="pickerSec">Cambiar</button>
   </div>
 
@@ -1032,6 +1033,8 @@ function chRow(list){
 
 /* ================= estado ================= */
 var sel = null, tab = "mios", timer = null, showAll = false;
+/* true = se esta mirando la vista global aunque haya equipo elegido */
+var verTodo = false;
 var refrescar = null;   /* lo rellena el bloque de directo, si esta activo */
 try{ sel = localStorage.getItem("miEquipo"); }catch(e){}
 if(!T[sel]) sel = null;
@@ -1057,6 +1060,20 @@ var pickerSec = document.getElementById("pickerSec");
 var mast = document.getElementById("mast");
 var changeBtn = document.getElementById("changeBtn");
 
+/* El boton salta entre la vista del equipo y la global, sin perder el equipo. */
+var todosBtn = document.getElementById("todosBtn");
+function syncTodos(){
+  if(!todosBtn) return;
+  todosBtn.hidden = !sel;
+  todosBtn.textContent = verTodo ? "Mi equipo" : "Todos";
+}
+todosBtn.addEventListener("click", function(){
+  verTodo = !verTodo;
+  showAll = false;
+  render();
+  window.scrollTo({top: 0, behavior: "smooth"});
+});
+
 changeBtn.addEventListener("click", function(){
   var open = pickerSec.hasAttribute("hidden");
   if(open){ pickerSec.removeAttribute("hidden"); }
@@ -1080,6 +1097,7 @@ function syncTabs(){
 function choose(id){
   var first = !sel;
   sel = id; showAll = false;
+  verTodo = false;      /* al elegir equipo se vuelve a lo suyo */
   try{ localStorage.setItem("miEquipo", id); }catch(e){}
   pickerSec.setAttribute("hidden","");
   changeBtn.setAttribute("aria-expanded","false");
@@ -1102,10 +1120,26 @@ function decorate(m){
 }
 
 function render(){
-  if(!sel){
-    content.hidden = true; chosen.className = "chosen";
-    pickerSec.removeAttribute("hidden"); mast.className = "mast";
-    portadaEl.hidden = false; renderPortada();
+  syncTodos();
+  if(!sel || verTodo){
+    content.hidden = true;
+    portadaEl.hidden = false;
+    if(sel){
+      /* con equipo elegido se mantiene su ficha arriba, con el boton para
+         volver a lo suyo; el selector se queda cerrado */
+      chosen.className = "chosen on";
+      mast.className = "mast compact";
+      pickerSec.setAttribute("hidden", "");
+      document.getElementById("chosenCrest").innerHTML = crest(sel, 34);
+      document.getElementById("chosenName").textContent = T[sel].n;
+      document.getElementById("chosenSub").textContent = "Viendo todos los partidos";
+    } else {
+      chosen.className = "chosen";
+      pickerSec.removeAttribute("hidden");
+      mast.className = "mast";
+    }
+    renderPortada();
+    estadoDeLosAvisos();
     return;
   }
   portadaEl.hidden = true;
@@ -1374,8 +1408,9 @@ function resultadosHTML(dias, titulo){
 }
 
 function renderRound(){
-  panel.innerHTML = '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega estos días, de LaLiga y de Europa, con su canal. Tu equipo aparece resaltado.</span></div>'
-    + proximosHTML(5) + resultadosHTML(5);
+  panel.innerHTML = enJuegoHTML()
+    + '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega esta semana, de LaLiga y de Europa, con su canal. Tu equipo aparece resaltado.</span></div>'
+    + proximosHTML(7) + resultadosHTML(7);
 }
 
 /* Cualquier partido en juego ahora mismo, sea de quien sea. */
@@ -1390,28 +1425,33 @@ function partidoEnJuego(){
 }
 
 /* Portada: lo que se ve antes de elegir equipo. */
-function renderPortada(){
-  var box = document.getElementById("portadaStatus");
+/* La tarjeta del partido que se esta jugando ahora, sea de quien sea. La usan
+   la portada y la pestaña "Estos dias", que para eso son la misma vista. */
+function enJuegoHTML(){
   var jugando = partidoEnJuego();
-  if(jugando){
-    var pr = result(jugando);
-    var vivo = "Se está jugando ahora";
-    if(pr && pr.minute) vivo = "En juego \u00b7 minuto " + pr.minute;
-    else if(pr && pr.half) vivo = "Descanso";
-    box.innerHTML = '<div class="rescard playing" data-p="'+esc(jugando.date+"|"+jugando.h+"|"+jugando.a)+'">'
-      + '<div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
-      + resline(jugando, pr ? pr.hs + " - " + pr.as : "\u00b7 \u00b7")
-      + detalleHTML(pr)
-      + '<a class="livelink" href="'+esc(liveUrl(jugando))+'" target="_blank" rel="noopener">Ver el marcador en directo</a>'
-      + '</div>';
-  } else {
-    box.innerHTML = "";
-  }
+  if(!jugando) return "";
+  var pr = result(jugando);
+  var vivo = "Se está jugando ahora";
+  if(pr && pr.minute) vivo = "En juego \u00b7 minuto " + pr.minute;
+  else if(pr && pr.half) vivo = "Descanso";
+  return '<div class="rescard playing" data-p="'+esc(jugando.date+"|"+jugando.h+"|"+jugando.a)+'">'
+    + '<div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
+    + resline(jugando, pr ? pr.hs + " - " + pr.as : "\u00b7 \u00b7")
+    + detalleHTML(pr)
+    + '<a class="livelink" href="'+esc(liveUrl(jugando))+'" target="_blank" rel="noopener">Ver el marcador en directo</a>'
+    + '</div>';
+}
+
+function renderPortada(){
+  document.getElementById("portadaStatus").innerHTML = enJuegoHTML();
   document.getElementById("portadaPanel").innerHTML =
       '<h2 class="sec">Próximos partidos</h2>'
-    + '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega estos días, con su canal. Elige tu equipo ahí arriba para ver solo los suyos.</span></div>'
-    + proximosHTML(5)
-    + resultadosHTML(5);
+    + '<div class="note" style="margin-bottom:14px"><span>'
+    + (sel ? "Todo lo que se juega esta semana, con su canal. Los del " + esc(T[sel].n) + " van resaltados."
+           : "Todo lo que se juega esta semana, con su canal. Elige tu equipo ahí arriba para ver solo los suyos.")
+    + '</span></div>'
+    + proximosHTML(7)
+    + resultadosHTML(7);
 }
 
 function rivalChip(id){
