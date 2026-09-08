@@ -328,7 +328,13 @@ h2.sec{
   text-transform:uppercase; padding:2px 7px; border-radius:5px; background:var(--sunk); color:var(--ink2);
 }
 .pill.away{background:transparent; border:1px solid var(--line2)}
+.pill.vivo{
+  background:var(--live); color:#fff; display:inline-flex; align-items:center; gap:5px;
+}
+.pill.vivo .blink{width:6px; height:6px; background:#fff}
+.pill.fin{background:transparent; border:1px solid var(--line2)}
 .pill.comp{background:transparent; color:var(--ink3); padding-left:0}
+.fx .dt .wd.enjuego{color:var(--live); font-weight:700}
 .fx .hh{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px; font-variant-numeric:tabular-nums}
 .fx .chrow{margin-top:9px; gap:6px}
 .fx .ch{font-size:12px; padding:4px 9px 4px 5px}
@@ -1235,6 +1241,18 @@ function detalleHTML(r){
   return out;
 }
 
+/* Como esta el partido: la hora si no ha empezado, y si ya hay marcador, si
+   se esta jugando (con el minuto), si es el descanso o si ha terminado. Antes
+   cualquier partido con marcador ponia "Final", tambien los que rodaban. */
+function estadoHTML(m, r){
+  if(!r) return '<span class="hh">'+esc(m.time)+'</span>';
+  var marcador = '<span class="scorepill">'+esc(r.hs+" - "+r.as)+'</span>';
+  if(r.status === "ft") return marcador + '<span class="pill fin">Final</span>';
+  if(r.half) return marcador + '<span class="pill vivo"><span class="blink"></span>Descanso</span>';
+  return marcador + '<span class="pill vivo"><span class="blink"></span>'
+       + (r.minute ? esc(r.minute) : "En juego") + '</span>';
+}
+
 function resline(m, score){
   return '<div class="resline">'
     + '<div class="t">'+crest(m.h,30)+'<span>'+esc(T[m.h].s)+'</span></div>'
@@ -1328,8 +1346,7 @@ function renderList(full){
       + '<div class="body">'
       +   '<div class="top">'+crest(isHome ? m.a : m.h, 26)+'<span class="opp">'+esc(opp.n)+'</span></div>'
       +   '<div class="meta">'
-      +     (r ? '<span class="scorepill">'+esc(r.hs+" - "+r.as)+'</span><span class="pill">Final</span>'
-                : '<span class="hh">'+esc(m.time)+'</span>')
+      +     estadoHTML(m, r)
       +     '<span class="pill'+(isHome?"":" away")+'">'+(isHome?"En casa":"Fuera")+'</span>'
       +     '<span class="pill comp">'+esc(m.comp)+'</span></div>'
       +   chRow(m.ch)
@@ -1361,7 +1378,11 @@ function proximosHTML(dias){
     var mine = (sel && (m.h === sel || m.a === sel));
     var rr = result(m);
     html += '<div class="fx'+(mine?" hi":"")+'" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'" style="grid-template-columns:52px 1fr">'
-      + '<div class="dt"><span class="d" style="font-size:15px">'+esc(rr ? rr.hs+"-"+rr.as : m.time)+'</span></div>'
+      + '<div class="dt"><span class="d" style="font-size:15px">'+esc(rr ? rr.hs+"-"+rr.as : m.time)+'</span>'
+      +   (rr ? '<span class="wd' + (rr.status === "ft" ? '' : ' enjuego') + '">'
+              + esc(rr.status === "ft" ? "final" : (rr.half ? "descanso" : (rr.minute || "en juego")))
+              + '</span>' : '')
+      + '</div>'
       + '<div class="body"><div class="top">'
       +   crest(m.h,24)+'<span class="opp" style="font-size:14.5px">'+esc(T[m.h].n)+'</span>'
       +   '<span class="vs" style="font-size:11px">\u2014</span>'
@@ -1399,8 +1420,8 @@ function resultadosHTML(dias, titulo){
       curDay = x.date;
       html += '<div class="month">'+esc(etiquetaDia(x.t))+'</div>';
     }
-    var comp = x.r.comp && x.r.comp !== "LaLiga"
-             ? '<div class="lbl">' + esc(x.r.comp) + '</div>' : "";
+    var etiqueta = (x.r.comp && x.r.comp !== "LaLiga" ? esc(x.r.comp) + " · " : "") + "Final";
+    var comp = '<div class="lbl">' + etiqueta + '</div>';
     html += '<div class="rescard" data-p="'+esc(x.date+"|"+x.h+"|"+x.a)+'">'
            + comp + resline(x, x.r.hs + " - " + x.r.as) + detalleHTML(x.r) + '</div>';
   });
@@ -1503,8 +1524,7 @@ function renderEurope(){
         + '<div class="body">'
         +   '<div class="top">'+crest(isHome ? m.a : m.h, 26)+'<span class="opp">'+esc(opp.n)+'</span></div>'
         +   '<div class="meta">'
-        +     (r ? '<span class="scorepill">'+esc(r.hs+" - "+r.as)+'</span><span class="pill">Final</span>'
-                 : '<span class="hh">'+esc(m.time)+'</span>')
+        +     estadoHTML(m, r)
         +     '<span class="pill'+(isHome?"":" away")+'">'+(isHome?"En casa":"Fuera")+'</span></div>'
         +   chRow(m.ch)
         + '</div></div>';
