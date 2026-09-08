@@ -1268,8 +1268,11 @@ function pad(n){ return n < 10 ? "0"+n : ""+n; }
 function renderList(full){
   /* Primero lo que viene, que es a lo que se entra: los proximos partidos del
      equipo. Debajo, lo ya jugado de la jornada, que se mira despues y cada
-     tarjeta abre su ficha con las estadisticas. */
-  var jugados = resultadosHTML(4, "Ya jugados esta jornada");
+     tarjeta abre su ficha con las estadisticas.
+     La ventana es de una semana a proposito: LaLiga va el fin de semana y
+     Europa y la Copa entre semana, y con menos dias el partido de Champions
+     del martes desaparecia antes del domingo. */
+  var jugados = resultadosHTML(7, "Ya jugados esta jornada");
   if(!full.length){
     panel.innerHTML = '<div class="empty">No hay partidos programados ahora mismo.</div>' + jugados;
     return;
