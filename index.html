@@ -1260,12 +1260,12 @@ function tick(m){
 function pad(n){ return n < 10 ? "0"+n : ""+n; }
 
 function renderList(full){
-  /* Lo que ya se ha jugado esta jornada, con marcador, encima de los partidos
-     que quedan: al terminar el de tu equipo lo siguiente que se mira es como
-     ha ido el resto. Cada tarjeta abre su ficha con las estadisticas. */
+  /* Primero lo que viene, que es a lo que se entra: los proximos partidos del
+     equipo. Debajo, lo ya jugado de la jornada, que se mira despues y cada
+     tarjeta abre su ficha con las estadisticas. */
   var jugados = resultadosHTML(4, "Ya jugados esta jornada");
   if(!full.length){
-    panel.innerHTML = jugados + '<div class="empty">No hay partidos programados ahora mismo.</div>';
+    panel.innerHTML = '<div class="empty">No hay partidos programados ahora mismo.</div>' + jugados;
     return;
   }
   var LIMIT = 6;
@@ -1295,7 +1295,7 @@ function renderList(full){
   if(!showAll && full.length > LIMIT){
     html += '<button class="morebtn" id="moreBtn" type="button">Ver los '+(full.length-LIMIT)+' partidos restantes</button>';
   }
-  panel.innerHTML = jugados + (jugados ? '<h2 class="sec">Sus próximos partidos</h2>' : "") + html;
+  panel.innerHTML = html + jugados;
   var mb = document.getElementById("moreBtn");
   if(mb) mb.addEventListener("click", function(){ showAll = true; renderList(full); });
 }
