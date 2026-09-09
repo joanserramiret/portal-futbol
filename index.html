@@ -1587,11 +1587,19 @@ function partidoPorClave(clave){
 var fichaEl = document.getElementById("ficha");
 var fichaClave = null, fichaDatos = null, fichaTimer = null, fichaCerrando = false;
 var fichaPintado = "";
+/* Lo ya descargado en esta visita: al volver a abrir un partido sale al
+   instante, sin el parpadeo de "no hay estadisticas" mientras llega la red. */
+var fichaMemoria = {};
+/* cuantas peticiones quedan en el aire; mientras haya alguna, se dice que
+   esta cargando en vez de decir que no hay nada */
+var fichaPendientes = 0;
 
 function abreFicha(clave){
   var m = partidoPorClave(clave);
   if(!m || !fichaEl) return;
-  fichaClave = clave; fichaDatos = null; fichaPintado = "";
+  fichaClave = clave; fichaPintado = "";
+  fichaDatos = fichaMemoria[clave] || null;   /* lo de la vez anterior, si lo hay */
+  fichaPendientes = 0;
   document.body.style.overflow = "hidden";
   fichaEl.innerHTML = '<div class="cabecera">'
     + '<button class="volver" type="button" id="fichaVolver">\u2039 Volver</button>'
@@ -1601,13 +1609,15 @@ function abreFicha(clave){
   pintaFicha();
   cargaDirecto();
   if(fichaTimer) clearInterval(fichaTimer);
-  fichaTimer = setInterval(cargaDirecto, 20000);
+  /* con el partido rodando, cada diez segundos; si ya termino no hay prisa */
+  var vivo = (function(){ var r = result(m); return r && r.status !== "ft"; })();
+  fichaTimer = setInterval(cargaDirecto, vivo ? 10000 : 60000);
   try{ history.pushState({ficha:clave}, ""); }catch(e){}
 }
 
 function cierraFicha(volviendo){
   if(!fichaClave) return;
-  fichaClave = null; fichaDatos = null; fichaPintado = "";
+  fichaClave = null; fichaDatos = null; fichaPintado = ""; fichaPendientes = 0;
   if(fichaTimer){ clearInterval(fichaTimer); fichaTimer = null; }
   if(fichaEl) fichaEl.setAttribute("hidden", "");
   document.body.style.overflow = "";
@@ -1626,16 +1636,32 @@ function cargaDirecto(){
   if(!fichaClave) return;
   var pedido = fichaClave;
   var archivo = pedido.replace(/\|/g, "_") + ".json";
-  basesDirecto().forEach(function(base){
-    fetch(base + archivo + "?t=" + Date.now(), {cache:"no-store"})
+  var bases = basesDirecto();
+  fichaPendientes = bases.length;
+  bases.forEach(function(base, i){
+    /* La primera fuente es el servidor de casa, que en pleno partido esta
+       bloqueado y no rechaza: se traga la conexion. Sin este corte de cuatro
+       segundos, la ficha se quedaria "cargando" hasta que el navegador se
+       cansara, aunque la copia de GitHub ya hubiera contestado. */
+    var ctrl = (typeof AbortController === "function") ? new AbortController() : null;
+    var reloj = ctrl ? setTimeout(function(){ ctrl.abort(); }, 4000) : null;
+    var opciones = {cache:"no-store"};
+    if(ctrl) opciones.signal = ctrl.signal;
+    fetch(base + archivo + "?t=" + Date.now(), opciones)
       .then(function(r){ return r.ok ? r.json() : null; })
       .catch(function(){ return null; })
       .then(function(j){
-        if(!j || pedido !== fichaClave) return;
-        var nueva = Date.parse(j.ts || "") || 0;
-        var vieja = fichaDatos ? (Date.parse(fichaDatos.ts || "") || 0) : -1;
-        if(nueva < vieja) return;
-        fichaDatos = j;
+        if(reloj) clearTimeout(reloj);
+        if(pedido !== fichaClave) return;
+        fichaPendientes--;
+        if(j){
+          var nueva = Date.parse(j.ts || "") || 0;
+          var vieja = fichaDatos ? (Date.parse(fichaDatos.ts || "") || 0) : -1;
+          if(nueva >= vieja){
+            fichaDatos = j;
+            fichaMemoria[pedido] = j;
+          }
+        }
         pintaFicha();
       });
   });
@@ -1697,11 +1723,15 @@ function pintaFicha(){
       + '</ul>';
   }
   if(!d){
-    html += '<div class="note" style="margin-top:18px"><span>'
-      + (m.t.getTime() > Date.now()
-          ? 'Todavía no se ha jugado. Las estadísticas y la narración aparecen aquí en cuanto empiece.'
-          : 'De este partido no hay estadísticas guardadas.')
-      + '</span></div>';
+    var texto;
+    if(m.t.getTime() > Date.now()){
+      texto = 'Todavía no se ha jugado. Las estadísticas y la narración aparecen aquí en cuanto empiece.';
+    } else if(fichaPendientes > 0){
+      texto = 'Cargando las estadísticas…';   /* aun estan de camino: no es que no haya */
+    } else {
+      texto = 'De este partido no hay estadísticas guardadas.';
+    }
+    html += '<div class="note" style="margin-top:18px"><span>'+texto+'</span></div>';
   }
   /* Solo se repinta el cuerpo, y solo si algo ha cambiado, guardando por donde
      iba la lectura: asi el refresco no te devuelve al principio de la cronica
