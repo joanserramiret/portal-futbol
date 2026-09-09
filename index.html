@@ -314,14 +314,13 @@ h2.sec{
   padding:13px 12px; background:var(--surface); border:1px solid var(--line);
   border-radius:12px; margin-bottom:7px;
 }
-.fx.hi{border-color:var(--accent-line); background:linear-gradient(var(--surface),var(--surface)) padding-box}
-.fx.mio{
+.fx.hi, .fx.mio{
   background:var(--accent-soft); border-color:var(--accent-line);
   border-left:5px solid var(--accent); padding-left:14px;
   box-shadow:var(--shadow);
 }
-.fx.mio .opp{font-weight:800}
-.fx.mio .dt .d{color:var(--accent)}
+.fx.hi .opp, .fx.mio .opp{font-weight:800}
+.fx.hi .dt .d, .fx.mio .dt .d{color:var(--accent)}
 .tuyo{
   display:inline-flex; align-items:center; gap:5px; margin-bottom:7px;
   font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600;
@@ -1357,6 +1356,7 @@ function renderList(full){
     html += '<div class="fx'+(i===0?" hi":"")+'" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'">'
       + '<div class="dt"><span class="d">'+d.getDate()+'</span><span class="mo">'+MO[d.getMonth()]+'</span><span class="wd">'+WD[d.getDay()]+'</span></div>'
       + '<div class="body">'
+      +   (i===0 ? '<div class="tuyo">'+(r && r.status !== "ft" ? "Ahora" : "Próximo partido")+'</div>' : "")
       +   '<div class="top">'+crest(isHome ? m.a : m.h, 26)+'<span class="opp">'+esc(opp.n)+'</span></div>'
       +   '<div class="meta">'
       +     estadoHTML(m, r)
