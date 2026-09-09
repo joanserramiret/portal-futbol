@@ -315,6 +315,19 @@ h2.sec{
   border-radius:12px; margin-bottom:7px;
 }
 .fx.hi{border-color:var(--accent-line); background:linear-gradient(var(--surface),var(--surface)) padding-box}
+.fx.mio{
+  background:var(--accent-soft); border-color:var(--accent-line);
+  border-left:5px solid var(--accent); padding-left:14px;
+  box-shadow:var(--shadow);
+}
+.fx.mio .opp{font-weight:800}
+.fx.mio .dt .d{color:var(--accent)}
+.tuyo{
+  display:inline-flex; align-items:center; gap:5px; margin-bottom:7px;
+  font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
+}
+.tuyo::before{content:""; width:6px; height:6px; border-radius:99px; background:var(--accent)}
 .fx .dt{text-align:center; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
 .fx .dt .d{display:block; font-size:20px; font-weight:600; line-height:1.05}
 .fx .dt .mo{display:block; font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink3)}
@@ -1377,13 +1390,15 @@ function proximosHTML(dias){
     }
     var mine = (sel && (m.h === sel || m.a === sel));
     var rr = result(m);
-    html += '<div class="fx'+(mine?" hi":"")+'" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'" style="grid-template-columns:52px 1fr">'
+    html += '<div class="fx'+(mine?" mio":"")+'" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'" style="grid-template-columns:52px 1fr">'
       + '<div class="dt"><span class="d" style="font-size:15px">'+esc(rr ? rr.hs+"-"+rr.as : m.time)+'</span>'
       +   (rr ? '<span class="wd' + (rr.status === "ft" ? '' : ' enjuego') + '">'
               + esc(rr.status === "ft" ? "final" : (rr.half ? "descanso" : (rr.minute || "en juego")))
               + '</span>' : '')
       + '</div>'
-      + '<div class="body"><div class="top">'
+      + '<div class="body">'
+      + (mine ? '<div class="tuyo">Tu equipo</div>' : "")
+      + '<div class="top">'
       +   crest(m.h,24)+'<span class="opp" style="font-size:14.5px">'+esc(T[m.h].n)+'</span>'
       +   '<span class="vs" style="font-size:11px">\u2014</span>'
       +   crest(m.a,24)+'<span class="opp" style="font-size:14.5px">'+esc(T[m.a].n)+'</span>'
