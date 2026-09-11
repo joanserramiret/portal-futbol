@@ -863,14 +863,38 @@ function inicialesDe(n){
    actualizador, que puede traer rivales nuevos (un sorteo de Copa, por ejemplo). */
 function registraDePartidos(lista){
   lista.forEach(function(m){
+    var fichas = m[6] || {};        /* nombre y escudo que trae el actualizador */
     [m[2], m[3]].forEach(function(id){
       if(T[id]) return;
       var r = R[id];
-      if(!r){ T[id] = {n:id, s:id, m:id.slice(0,3).toUpperCase(), p:"solid",
-                       c1:"#E7EAF0", c2:"#FFFFFF", b:"#5B6577", ajeno:true}; return; }
-      T[id] = {n:r.n, s:r.n, m:inicialesDe(r.n), p:"solid",
-               c1:r.c, c2:"#FFFFFF", b:(r.t === "#fff" ? r.c : "#111111"), ajeno:true};
+      if(r){
+        T[id] = {n:r.n, s:r.n, m:inicialesDe(r.n), p:"solid",
+                 c1:r.c, c2:"#FFFFFF", b:(r.t === "#fff" ? r.c : "#111111"), ajeno:true};
+        return;
+      }
+      var f = fichas[id];
+      if(f && f.n){
+        /* un Tercera de la Copa: se le pone su nombre de verdad, no el
+           identificador interno, que es lo que salia antes ("xcdbaztan") */
+        T[id] = {n:f.n, s:f.s || f.n, m:(f.m || inicialesDe(f.n)).toUpperCase(), p:"solid",
+                 c1:"#E7EAF0", c2:"#FFFFFF", b:"#5B6577", ajeno:true};
+        return;
+      }
+      T[id] = {n:id, s:id, m:id.slice(0,3).toUpperCase(), p:"solid",
+               c1:"#E7EAF0", c2:"#FFFFFF", b:"#5B6577", ajeno:true};
     });
+  });
+}
+/* Los escudos van aparte porque IMG se crea mas abajo y esta funcion ya se
+   usa aqui arriba con los partidos de Europa, que no traen escudo. */
+function registraEscudosDePartidos(lista){
+  lista.forEach(function(m){
+    var fichas = m[6];
+    if(!fichas) return;
+    for(var id in fichas){
+      if(!Object.prototype.hasOwnProperty.call(fichas, id)) continue;
+      if(fichas[id] && fichas[id].logo && !IMG[id]) IMG[id] = fichas[id].logo;
+    }
   });
 }
 registraDePartidos(MEU);
@@ -1145,7 +1169,16 @@ function myMatches(){
     .sort(function(a,b){ return a.t - b.t; });
 }
 function decorate(m){
-  return {raw:m, t:ts(m[0],m[1]), date:m[0], time:m[1], h:m[2], a:m[3], ch:m[4], comp:m[5] || "LaLiga"};
+  /* Sin hora (la federacion aun no la ha puesto) el partido se ordena como si
+     fuera de noche, que es lo normal, pero se enseña como "por confirmar". */
+  return {raw:m, t:ts(m[0], m[1] || "21:00"), date:m[0], time:m[1], h:m[2], a:m[3],
+          ch:m[4], comp:m[5] || "LaLiga"};
+}
+/* La hora, o el aviso de que todavia no hay. 'corto' para los huecos
+   estrechos, donde no cabe una frase. */
+function horaTxt(m, corto){
+  if(m.time) return m.time;
+  return corto ? "—" : "Por confirmar";
 }
 
 function render(){
@@ -1268,7 +1301,7 @@ function detalleHTML(r){
    se esta jugando (con el minuto), si es el descanso o si ha terminado. Antes
    cualquier partido con marcador ponia "Final", tambien los que rodaban. */
 function estadoHTML(m, r){
-  if(!r) return '<span class="hh">'+esc(m.time)+'</span>';
+  if(!r) return '<span class="hh">'+esc(horaTxt(m))+'</span>';
   var marcador = '<span class="scorepill">'+esc(r.hs+" - "+r.as)+'</span>';
   if(r.status === "ft") return marcador + '<span class="pill fin">Final</span>';
   if(r.half) return marcador + '<span class="pill vivo"><span class="blink"></span>Descanso</span>';
@@ -1302,7 +1335,7 @@ function renderHero(m){
     +   '<div class="vs">—</div>'
     +   '<div class="side">' + crest(m.a,54) + '<b>'+esc(away.n)+'</b><em>Fuera</em></div>'
     + '</div>'
-    + '<div class="when"><span class="day">'+esc(dayTxt)+'</span><span class="hh">'+esc(m.time)+'</span>'
+    + '<div class="when"><span class="day">'+esc(dayTxt)+'</span><span class="hh">'+esc(horaTxt(m))+'</span>'
     +   '<span class="count" id="count"></span></div>'
     + chRow(m.ch)
     + '<button class="linkbtn" id="copyBtn" type="button" style="margin-top:14px">Copiar para el grupo</button>'
@@ -1310,7 +1343,7 @@ function renderHero(m){
   document.getElementById("copyBtn").addEventListener("click", function(){
     var chs = m.ch.filter(function(c){ return c !== "tbd"; })
                   .map(function(c){ return CH[c].free ? "DAZN (gratis)" : CH[c].n; });
-    var txt = T[m.h].n + " - " + T[m.a].n + "\n" + dayTxt + " a las " + m.time + "\n"
+    var txt = T[m.h].n + " - " + T[m.a].n + "\n" + dayTxt + (m.time ? " a las " + m.time : ", hora por confirmar") + "\n"
             + (chs.length ? "Por " + chs.join(" / ") : "Canal aún sin confirmar");
     var btn = this;
     var done = function(){ btn.textContent = "Copiado"; setTimeout(function(){ btn.textContent = "Copiar para el grupo"; }, 1800); };
@@ -1402,7 +1435,7 @@ function proximosHTML(dias){
     var mine = (sel && (m.h === sel || m.a === sel));
     var rr = result(m);
     html += '<div class="fx'+(mine?" mio":"")+'" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'" style="grid-template-columns:52px 1fr">'
-      + '<div class="dt"><span class="d" style="font-size:15px">'+esc(rr ? rr.hs+"-"+rr.as : m.time)+'</span>'
+      + '<div class="dt"><span class="d" style="font-size:15px">'+esc(rr ? rr.hs+"-"+rr.as : horaTxt(m, true))+'</span>'
       +   (rr ? '<span class="wd' + (rr.status === "ft" ? '' : ' enjuego') + '">'
               + esc(rr.status === "ft" ? "final" : (rr.half ? "descanso" : (rr.minute || "en juego")))
               + '</span>' : '')
@@ -1594,10 +1627,11 @@ function aplicaCalendario(j){
     /* el canal que trae la parrilla manda; si ese partido aun no lo tiene
        asignado, se mira la lista de aqui, y si tampoco, queda por confirmar */
     var ch = (p[5] && p[5].length) ? p[5] : (canales[p[2] + "|" + p[3] + "|" + comp] || ["tbd"]);
-    return [p[0], p[1], p[2], p[3], ch, comp];
+    return [p[0], p[1], p[2], p[3], ch, comp, p[6] || null];
   });
   M = nuevo;
   registraDePartidos(M);
+  registraEscudosDePartidos(M);
   return true;
 }
 
@@ -1734,7 +1768,7 @@ function pintaFicha(){
   else if(r && r.half) estado = '<span class="vivo">Descanso</span>';
   else if(r && r.minute) estado = '<span class="vivo">En juego · minuto '+esc(r.minute)+'</span>';
   else if(r) estado = '<span class="vivo">En juego</span>';
-  else estado = etiquetaDia(m.t) + (m.time ? " · " + esc(m.time) : "");
+  else estado = etiquetaDia(m.t) + (m.time ? " · " + esc(m.time) : " · hora por confirmar");
 
   var etiqueta = document.getElementById("fichaComp");
   if(etiqueta) etiqueta.textContent = m.comp || "LaLiga";
