@@ -16,5 +16,6 @@
 !icono/**
 !datos/
 !datos/resultados.json
+!datos/calendario.json
 !datos/directo/
 !datos/directo/**
