@@ -1382,9 +1382,13 @@ function renderList(full){
      La ventana es de una semana a proposito: LaLiga va el fin de semana y
      Europa y la Copa entre semana, y con menos dias el partido de Champions
      del martes desaparecia antes del domingo. */
-  var jugados = resultadosHTML(7, "Ya jugados esta jornada");
+  /* Orden: primero lo de la jornada, que es lo que se mira al abrir el domingo
+     por la noche, y debajo los proximos partidos del equipo. Arriba del todo
+     manda la tarjeta del partido en juego o del ultimo resultado, que va en su
+     propio hueco y no pasa por aqui. */
+  var jugados = resultadosHTML(7, "Resultados de la jornada");
   if(!full.length){
-    panel.innerHTML = '<div class="empty">No hay partidos programados ahora mismo.</div>' + jugados;
+    panel.innerHTML = jugados + '<div class="empty">No hay partidos programados ahora mismo.</div>';
     return;
   }
   var LIMIT = 6;
@@ -1414,7 +1418,9 @@ function renderList(full){
   if(!showAll && full.length > LIMIT){
     html += '<button class="morebtn" id="moreBtn" type="button">Ver los '+(full.length-LIMIT)+' partidos restantes</button>';
   }
-  panel.innerHTML = html + jugados;
+  panel.innerHTML = jugados
+    + '<h2 class="sec">Próximos partidos del ' + esc(T[sel].s || T[sel].n) + '</h2>'
+    + html;
   var mb = document.getElementById("moreBtn");
   if(mb) mb.addEventListener("click", function(){ showAll = true; renderList(full); });
 }
