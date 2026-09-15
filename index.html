@@ -1304,6 +1304,8 @@ function estadoHTML(m, r){
   if(!r) return '<span class="hh">'+esc(horaTxt(m))+'</span>';
   var marcador = '<span class="scorepill">'+esc(r.hs+" - "+r.as)+'</span>';
   if(r.status === "ft") return marcador + '<span class="pill fin">Final</span>';
+  /* colgado en "en juego" mucho despues de empezar: ni parpadea ni miente */
+  if(terminado(r, m.t)) return marcador + '<span class="pill fin">Último marcador</span>';
   if(r.half) return marcador + '<span class="pill vivo"><span class="blink"></span>Descanso</span>';
   return marcador + '<span class="pill vivo"><span class="blink"></span>'
        + (r.minute ? esc(r.minute) : "En juego") + '</span>';
@@ -1456,16 +1458,33 @@ function proximosHTML(dias){
 /* Partidos ya terminados de los últimos días, con marcador y resumen. Se leen
    de los resultados y no del calendario, porque el calendario solo guarda lo
    que está por venir. */
+/* Un partido no siempre llega a ponerse "final": si la fuente se queda
+   colgada, el marcador se congela en "en juego". Y entonces el partido
+   desaparece de la pagina: de los proximos ya ha salido (empezo hace horas) y
+   en los resultados no entra (no pone "final"). Pasadas dos horas y media
+   desde el comienzo se da por acabado y se enseña el ultimo marcador que se
+   supo, sin llamarlo final. */
+var DURACION_MAX = 9000000;
+function terminado(r, t){
+  if(!r) return false;
+  if(r.status === "ft") return true;
+  return !!t && (Date.now() - t.getTime() > DURACION_MAX);
+}
 function resultadosRecientes(dias){
   var out = [], corte = Date.now() - dias*86400000;
+  /* la hora de comienzo de cada partido, para saber si ya tendria que haber
+     acabado; la clave de RES solo trae el dia */
+  var horas = {};
+  M.forEach(function(m){ horas[m[0]+"|"+m[2]+"|"+m[3]] = ts(m[0], m[1] || "21:00"); });
   for(var k in RES){
     if(!Object.prototype.hasOwnProperty.call(RES, k)) continue;
     var r = RES[k], parte = k.split("|");
-    if(parte.length !== 3 || r.status !== "ft") continue;
+    if(parte.length !== 3) continue;
     if(!T[parte[1]] || !T[parte[2]]) continue;
-    var d = ts(parte[0], "21:00");
+    var d = horas[k] || ts(parte[0], "21:00");
+    if(!terminado(r, d)) continue;
     if(d.getTime() < corte) continue;
-    out.push({date:parte[0], t:d, h:parte[1], a:parte[2], r:r});
+    out.push({date:parte[0], t:d, h:parte[1], a:parte[2], r:r, cerrado:(r.status === "ft")});
   }
   out.sort(function(a,b){ return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); });
   return out;
@@ -1479,7 +1498,8 @@ function resultadosHTML(dias, titulo){
       curDay = x.date;
       html += '<div class="month">'+esc(etiquetaDia(x.t))+'</div>';
     }
-    var etiqueta = (x.r.comp && x.r.comp !== "LaLiga" ? esc(x.r.comp) + " · " : "") + "Final";
+    var etiqueta = (x.r.comp && x.r.comp !== "LaLiga" ? esc(x.r.comp) + " · " : "")
+                 + (x.cerrado ? "Final" : "Último marcador");
     var comp = '<div class="lbl">' + etiqueta + '</div>';
     html += '<div class="rescard" data-p="'+esc(x.date+"|"+x.h+"|"+x.a)+'">'
            + comp + resline(x, x.r.hs + " - " + x.r.as) + detalleHTML(x.r) + '</div>';
