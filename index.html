@@ -535,7 +535,6 @@ footer a{color:var(--ink2)}
   <div class="chosen" id="chosen">
     <span id="chosenCrest"></span>
     <span class="who"><b id="chosenName"></b><span id="chosenSub"></span></span>
-    <button class="linkbtn" id="todosBtn" type="button">Todos</button>
     <button class="linkbtn" id="changeBtn" type="button" aria-expanded="false" aria-controls="pickerSec">Cambiar</button>
   </div>
 
@@ -557,8 +556,8 @@ footer a{color:var(--ink2)}
     <div id="hero"></div>
 
     <div class="tabs" role="tablist">
-      <button class="tab" role="tab" id="tab-mios" aria-selected="true" aria-controls="panel">Mis partidos</button>
-      <button class="tab" role="tab" id="tab-jornada" aria-selected="false" aria-controls="panel">Estos días</button>
+      <button class="tab" role="tab" id="tab-todos" aria-selected="true" aria-controls="panel">Todos</button>
+      <button class="tab" role="tab" id="tab-mios" aria-selected="false" aria-controls="panel">Mi equipo</button>
       <button class="tab" role="tab" id="tab-europa" aria-selected="false" aria-controls="panel">Europa</button>
     </div>
 
@@ -1085,9 +1084,14 @@ function chRow(list){
 }
 
 /* ================= estado ================= */
-var sel = null, tab = "mios", timer = null, showAll = false;
-/* true = se esta mirando la vista global aunque haya equipo elegido */
-var verTodo = false;
+/* Las tres vistas son el mismo listado con distinto filtro: "todos" es todo lo
+   que se juega, ordenado por dia y hora, con los del equipo en naranja; "mios"
+   deja solo los suyos; "europa", sus partidos de fuera de LaLiga. Antes esto
+   estaba repartido entre un boton de arriba y unas pestañas, que filtraban lo
+   mismo desde dos sitios. */
+var TABS = ["todos", "mios", "europa"];
+var sel = null, tab = "todos", timer = null, showAll = false;
+try{ if(TABS.indexOf(localStorage.getItem("vista")) >= 0) tab = localStorage.getItem("vista"); }catch(e){}
 var refrescar = null;   /* lo rellena el bloque de directo, si esta activo */
 try{ sel = localStorage.getItem("miEquipo"); }catch(e){}
 if(!T[sel]) sel = null;
@@ -1113,20 +1117,6 @@ var pickerSec = document.getElementById("pickerSec");
 var mast = document.getElementById("mast");
 var changeBtn = document.getElementById("changeBtn");
 
-/* El boton salta entre la vista del equipo y la global, sin perder el equipo. */
-var todosBtn = document.getElementById("todosBtn");
-function syncTodos(){
-  if(!todosBtn) return;
-  todosBtn.hidden = !sel;
-  todosBtn.textContent = verTodo ? "Mi equipo" : "Todos";
-}
-todosBtn.addEventListener("click", function(){
-  verTodo = !verTodo;
-  showAll = false;
-  render();
-  window.scrollTo({top: 0, behavior: "smooth"});
-});
-
 changeBtn.addEventListener("click", function(){
   var open = pickerSec.hasAttribute("hidden");
   if(open){ pickerSec.removeAttribute("hidden"); }
@@ -1136,13 +1126,15 @@ changeBtn.addEventListener("click", function(){
   if(open) pickerSec.scrollIntoView({behavior:"smooth", block:"start"});
 });
 
-["mios","jornada","europa"].forEach(function(k){
+TABS.forEach(function(k){
   document.getElementById("tab-"+k).addEventListener("click", function(){
-    tab = k; syncTabs(); render();
+    tab = k; showAll = false;
+    try{ localStorage.setItem("vista", k); }catch(e){}
+    syncTabs(); render();
   });
 });
 function syncTabs(){
-  ["mios","jornada","europa"].forEach(function(k){
+  TABS.forEach(function(k){
     document.getElementById("tab-"+k).setAttribute("aria-selected", String(k===tab));
   });
 }
@@ -1150,7 +1142,6 @@ function syncTabs(){
 function choose(id){
   var first = !sel;
   sel = id; showAll = false;
-  verTodo = false;      /* al elegir equipo se vuelve a lo suyo */
   try{ localStorage.setItem("miEquipo", id); }catch(e){}
   pickerSec.setAttribute("hidden","");
   changeBtn.setAttribute("aria-expanded","false");
@@ -1182,24 +1173,13 @@ function horaTxt(m, corto){
 }
 
 function render(){
-  syncTodos();
-  if(!sel || verTodo){
+  syncTabs();
+  if(!sel){
     content.hidden = true;
     portadaEl.hidden = false;
-    if(sel){
-      /* con equipo elegido se mantiene su ficha arriba, con el boton para
-         volver a lo suyo; el selector se queda cerrado */
-      chosen.className = "chosen on";
-      mast.className = "mast compact";
-      pickerSec.setAttribute("hidden", "");
-      document.getElementById("chosenCrest").innerHTML = crest(sel, 34);
-      document.getElementById("chosenName").textContent = T[sel].n;
-      document.getElementById("chosenSub").textContent = "Viendo todos los partidos";
-    } else {
-      chosen.className = "chosen";
-      pickerSec.removeAttribute("hidden");
-      mast.className = "mast";
-    }
+    chosen.className = "chosen";
+    pickerSec.removeAttribute("hidden");
+    mast.className = "mast";
     renderPortada();
     estadoDeLosAvisos();
     return;
@@ -1220,7 +1200,7 @@ function render(){
   var playing = renderStatus();
   renderHero(list.filter(function(m){ return !playing || reskey(m) !== reskey(playing); })[0]);
   if(tab === "mios") renderList(list);
-  else if(tab === "jornada") renderRound();
+  else if(tab === "todos") renderRound(playing);
   else renderEurope();
   estadoDeLosAvisos();
 }
@@ -1513,10 +1493,22 @@ function resultadosHTML(dias, titulo){
   return html;
 }
 
-function renderRound(){
-  panel.innerHTML = enJuegoHTML()
-    + '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega esta semana, de LaLiga y de Europa, con su canal. Tu equipo aparece resaltado.</span></div>'
-    + proximosHTML(7) + resultadosHTML(7);
+/* Vista "Todos": todo lo que se juega, por dia y hora, con los partidos del
+   equipo elegido en naranja. Primero lo ya jugado de la jornada y debajo lo
+   que viene, igual que en la vista del equipo.
+   'yaArriba' es el partido que la tarjeta de arriba ya esta enseñando: si es
+   el mismo que se esta jugando, no se repite aqui. */
+function renderRound(yaArriba){
+  var jugando = partidoEnJuego();
+  var encabezado = (jugando && (!yaArriba || reskey(jugando) !== reskey(yaArriba)))
+                 ? enJuegoHTML() : "";
+  panel.innerHTML = encabezado
+    + resultadosHTML(7, "Resultados de la jornada")
+    + '<h2 class="sec">Próximos partidos</h2>'
+    + '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega esta semana, de LaLiga y de Europa, con su canal.'
+    + (sel ? ' Los del ' + esc(T[sel].s || T[sel].n) + ' van resaltados.' : '')
+    + '</span></div>'
+    + proximosHTML(7);
 }
 
 /* Cualquier partido en juego ahora mismo, sea de quien sea. */
@@ -1548,16 +1540,16 @@ function enJuegoHTML(){
     + '</div>';
 }
 
+/* La portada, sin equipo elegido: el mismo listado, mismo orden. */
 function renderPortada(){
   document.getElementById("portadaStatus").innerHTML = enJuegoHTML();
   document.getElementById("portadaPanel").innerHTML =
-      '<h2 class="sec">Próximos partidos</h2>'
+      resultadosHTML(7, "Resultados de la jornada")
+    + '<h2 class="sec">Próximos partidos</h2>'
     + '<div class="note" style="margin-bottom:14px"><span>'
-    + (sel ? "Todo lo que se juega esta semana, con su canal. Los del " + esc(T[sel].n) + " van resaltados."
-           : "Todo lo que se juega esta semana, con su canal. Elige tu equipo ahí arriba para ver solo los suyos.")
+    + "Todo lo que se juega esta semana, con su canal. Elige tu equipo ahí arriba para ver solo los suyos."
     + '</span></div>'
-    + proximosHTML(7)
-    + resultadosHTML(7);
+    + proximosHTML(7);
 }
 
 function rivalChip(id){
