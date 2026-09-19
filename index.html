@@ -493,6 +493,7 @@ footer a{color:var(--ink2)}
   font-family:Archivo,sans-serif; font-weight:700; font-size:13px;
 }
 .morebtn:hover{color:var(--ink); border-color:var(--ink2)}
+.resbtn{margin:0 0 16px; border-style:solid; border-color:var(--line2)}
 .morebtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 
 @media (max-width:560px){
@@ -1366,7 +1367,7 @@ function renderList(full){
      por la noche, y debajo los proximos partidos del equipo. Arriba del todo
      manda la tarjeta del partido en juego o del ultimo resultado, que va en su
      propio hueco y no pasa por aqui. */
-  var jugados = resultadosHTML(7, "Resultados de la jornada");
+  var jugados = bloqueResultados(7);
   if(!full.length){
     panel.innerHTML = jugados + '<div class="empty">No hay partidos programados ahora mismo.</div>';
     return;
@@ -1478,7 +1479,8 @@ function resultadosRecientes(dias){
 function resultadosHTML(dias, titulo){
   var lista = resultadosRecientes(dias);
   if(!lista.length) return "";
-  var html = '<h2 class="sec">'+esc(titulo || "Resultados")+'</h2>', curDay = "";
+  var html = (titulo === null) ? "" : '<h2 class="sec">'+esc(titulo || "Resultados")+'</h2>';
+  var curDay = "";
   lista.forEach(function(x){
     if(x.date !== curDay){
       curDay = x.date;
@@ -1499,11 +1501,8 @@ function resultadosHTML(dias, titulo){
    'yaArriba' es el partido que la tarjeta de arriba ya esta enseñando: si es
    el mismo que se esta jugando, no se repite aqui. */
 function renderRound(yaArriba){
-  var jugando = partidoEnJuego();
-  var encabezado = (jugando && (!yaArriba || reskey(jugando) !== reskey(yaArriba)))
-                 ? enJuegoHTML() : "";
-  panel.innerHTML = encabezado
-    + resultadosHTML(7, "Resultados de la jornada")
+  panel.innerHTML = enJuegoHTML(yaArriba)
+    + bloqueResultados(7)
     + '<h2 class="sec">Próximos partidos</h2>'
     + '<div class="note" style="margin-bottom:14px"><span>Todo lo que se juega esta semana, de LaLiga y de Europa, con su canal.'
     + (sel ? ' Los del ' + esc(T[sel].s || T[sel].n) + ' van resaltados.' : '')
@@ -1511,40 +1510,75 @@ function renderRound(yaArriba){
     + proximosHTML(7);
 }
 
-/* Cualquier partido en juego ahora mismo, sea de quien sea. */
-function partidoEnJuego(){
+/* Lo ya jugado, detras de un boton: interesa un rato despues de la jornada,
+   pero no tiene que estorbar todos los dias delante de lo que viene. Se
+   recuerda si estaba abierto o cerrado. */
+var resAbiertos = false;
+try{ resAbiertos = localStorage.getItem("verResultados") === "1"; }catch(e){}
+
+function bloqueResultados(dias){
+  var lista = resultadosRecientes(dias);
+  if(!lista.length) return "";
+  /* sin id: este bloque se pinta en la portada y en el panel, y dos veces el
+     mismo id en la pagina es pedir problemas */
+  return '<button class="morebtn resbtn" type="button" data-res="1" aria-expanded="'
+       + (resAbiertos ? "true" : "false") + '">'
+       + (resAbiertos ? "Ocultar los " : "Ver los ") + lista.length
+       + (lista.length === 1 ? " resultado" : " resultados") + ' de la jornada</button>'
+       + '<div class="bloqueRes"' + (resAbiertos ? "" : " hidden") + '>'
+       + resultadosHTML(dias, null) + '</div>';
+}
+
+document.addEventListener("click", function(e){
+  if(!e.target || !e.target.closest) return;
+  if(!e.target.closest("[data-res]")) return;
+  resAbiertos = !resAbiertos;
+  try{ localStorage.setItem("verResultados", resAbiertos ? "1" : "0"); }catch(e2){}
+  render();
+});
+
+/* Todos los partidos que se estan jugando ahora, sean de quien sean, del que
+   empezo antes al que empezo despues. Antes solo se enseñaba uno, y en una
+   tarde de domingo hay cuatro a la vez. */
+function partidosEnJuego(){
   var now = Date.now();
-  var todos = M.map(decorate).sort(function(a,b){ return b.t - a.t; });
-  for(var i=0;i<todos.length;i++){
-    var m = todos[i], gone = now - m.t.getTime(), r = result(m);
-    if(gone >= -60000 && gone < 9000000 && (!r || r.status !== "ft")) return m;
-  }
-  return null;
+  return M.map(decorate).filter(function(m){
+    var gone = now - m.t.getTime(), r = result(m);
+    return gone >= -60000 && gone < 9000000 && (!r || r.status !== "ft");
+  }).sort(function(a,b){ return a.t - b.t; });
+}
+function partidoEnJuego(){
+  return partidosEnJuego()[0] || null;
 }
 
 /* Portada: lo que se ve antes de elegir equipo. */
 /* La tarjeta del partido que se esta jugando ahora, sea de quien sea. La usan
    la portada y la pestaña "Estos dias", que para eso son la misma vista. */
-function enJuegoHTML(){
-  var jugando = partidoEnJuego();
-  if(!jugando) return "";
-  var pr = result(jugando);
+function tarjetaEnJuego(m){
+  var pr = result(m);
   var vivo = "Se está jugando ahora";
   if(pr && pr.minute) vivo = "En juego \u00b7 minuto " + pr.minute;
   else if(pr && pr.half) vivo = "Descanso";
-  return '<div class="rescard playing" data-p="'+esc(jugando.date+"|"+jugando.h+"|"+jugando.a)+'">'
+  return '<div class="rescard playing" data-p="'+esc(m.date+"|"+m.h+"|"+m.a)+'">'
     + '<div class="lbl"><span class="blink"></span>'+esc(vivo)+'</div>'
-    + resline(jugando, pr ? pr.hs + " - " + pr.as : "\u00b7 \u00b7")
+    + resline(m, pr ? pr.hs + " - " + pr.as : "\u00b7 \u00b7")
     + detalleHTML(pr)
-    + '<a class="livelink" href="'+esc(liveUrl(jugando))+'" target="_blank" rel="noopener">Ver el marcador en directo</a>'
+    + '<a class="livelink" href="'+esc(liveUrl(m))+'" target="_blank" rel="noopener">Ver el marcador en directo</a>'
     + '</div>';
+}
+function enJuegoHTML(omitir){
+  var lista = partidosEnJuego().filter(function(m){
+    return !omitir || reskey(m) !== reskey(omitir);
+  });
+  if(!lista.length) return "";
+  return lista.map(tarjetaEnJuego).join("");
 }
 
 /* La portada, sin equipo elegido: el mismo listado, mismo orden. */
 function renderPortada(){
   document.getElementById("portadaStatus").innerHTML = enJuegoHTML();
   document.getElementById("portadaPanel").innerHTML =
-      resultadosHTML(7, "Resultados de la jornada")
+      bloqueResultados(7)
     + '<h2 class="sec">Próximos partidos</h2>'
     + '<div class="note" style="margin-bottom:14px"><span>'
     + "Todo lo que se juega esta semana, con su canal. Elige tu equipo ahí arriba para ver solo los suyos."
