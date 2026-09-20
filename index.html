@@ -1374,12 +1374,34 @@ function renderList(full){
   }
   var LIMIT = 6;
   var list = showAll ? full : full.slice(0, LIMIT);
-  var html = "", curMonth = "";
+  /* Se parte igual que la vista de todos: primero la jornada en curso,
+     separada por dias, y debajo el resto del calendario por meses. */
+  var deLaJornada = fechasDeLaJornada();
+  var html = "", curMonth = "", seccion = "";
   list.forEach(function(m, i){
-    var d = m.t, key = d.getFullYear()+"-"+d.getMonth();
-    if(key !== curMonth){
-      curMonth = key;
-      html += '<div class="month">'+MOL[d.getMonth()]+" "+d.getFullYear()+'</div>';
+    var d = m.t;
+    if(deLaJornada.indexOf(m.date) >= 0){
+      if(seccion !== "jornada"){
+        seccion = "jornada"; curMonth = "";
+        html += '<h2 class="sec">Esta jornada</h2>';
+      }
+      if(m.date !== curMonth){
+        curMonth = m.date;
+        html += '<div class="month">'+esc(etiquetaDia(d))+'</div>';
+      }
+    } else {
+      if(seccion !== "resto"){
+        /* solo tiene sentido decir "mas adelante" si antes habia algo: si el
+           equipo no juega esta jornada, la lista empieza directamente */
+        var habia = (seccion === "jornada");
+        seccion = "resto"; curMonth = "";
+        if(habia) html += '<h2 class="sec">Más adelante</h2>';
+      }
+      var key = d.getFullYear()+"-"+d.getMonth();
+      if(key !== curMonth){
+        curMonth = key;
+        html += '<div class="month">'+MOL[d.getMonth()]+" "+d.getFullYear()+'</div>';
+      }
     }
     var isHome = m.h === sel;
     var opp = T[isHome ? m.a : m.h];
@@ -1399,15 +1421,29 @@ function renderList(full){
   if(!showAll && full.length > LIMIT){
     html += '<button class="morebtn" id="moreBtn" type="button">Ver los '+(full.length-LIMIT)+' partidos restantes</button>';
   }
-  panel.innerHTML = jugados
-    + '<h2 class="sec">Próximos partidos del ' + esc(T[sel].s || T[sel].n) + '</h2>'
-    + html;
+  panel.innerHTML = jugados + html;
   var mb = document.getElementById("moreBtn");
   if(mb) mb.addEventListener("click", function(){ showAll = true; renderList(full); });
 }
 
 function diasDeHueco(a, b){
   return Math.round((ts(b, "12:00").getTime() - ts(a, "12:00").getTime()) / 86400000);
+}
+/* Que dias forman la jornada que viene ahora: la primera tanda de dias
+   seguidos con partidos, mirando todo el futbol y no solo un equipo (la
+   jornada es de la liga, aunque tu equipo juegue un solo dia). */
+function fechasDeLaJornada(){
+  var now = Date.now();
+  var prox = M.map(decorate).filter(function(m){ return m.t.getTime() > now - 7200000; })
+              .sort(function(a,b){ return a.t - b.t; });
+  var fechas = [], previo = null;
+  for(var i=0;i<prox.length;i++){
+    var f = prox[i].date;
+    if(f === previo) continue;
+    if(previo !== null && diasDeHueco(previo, f) > 1) break;
+    fechas.push(f); previo = f;
+  }
+  return fechas;
 }
 /* Los próximos partidos, agrupados por jornada y, dentro, por día. Devuelve
    HTML para usarlo igual en la pestaña "Todos" que en la portada. */
@@ -1631,12 +1667,32 @@ function renderEurope(){
     html += '<div class="card"><h3>'+esc(comp)+' · fase liga</h3>'
       + '<p class="sub">'+esc(TEXTO[comp] || "")+'</p>'
       + '<div class="chrow" style="margin-top:14px">'+chipHTML("mchamp")+chipHTML("mplus")+'</div></div>';
-    var curMonth = "";
+    /* misma division que en las otras dos vistas: la jornada en curso
+       separada por dias, y el resto por meses */
+    var deLaJornada = fechasDeLaJornada();
+    var curMonth = "", seccion = "";
     mios.forEach(function(m){
-      var d = m.t, key = d.getFullYear()+"-"+d.getMonth();
-      if(key !== curMonth){
-        curMonth = key;
-        html += '<div class="month">'+MOL[d.getMonth()]+" "+d.getFullYear()+'</div>';
+      var d = m.t;
+      if(deLaJornada.indexOf(m.date) >= 0){
+        if(seccion !== "jornada"){
+          seccion = "jornada"; curMonth = "";
+          html += '<h2 class="sec">Esta jornada</h2>';
+        }
+        if(m.date !== curMonth){
+          curMonth = m.date;
+          html += '<div class="month">'+esc(etiquetaDia(d))+'</div>';
+        }
+      } else {
+        if(seccion !== "resto"){
+          var habia = (seccion === "jornada");
+          seccion = "resto"; curMonth = "";
+          if(habia) html += '<h2 class="sec">Más adelante</h2>';
+        }
+        var key = d.getFullYear()+"-"+d.getMonth();
+        if(key !== curMonth){
+          curMonth = key;
+          html += '<div class="month">'+MOL[d.getMonth()]+" "+d.getFullYear()+'</div>';
+        }
       }
       var isHome = m.h === sel;
       var opp = T[isHome ? m.a : m.h] || {n:"?"};
